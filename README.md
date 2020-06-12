@@ -1,5 +1,5 @@
-# TorchArc
-TorchArc: Build PyTorch networks by specifying architectures.
+# TorchArc ![CI](https://github.com/kengz/torcharc/workflows/CI/badge.svg)
+Build PyTorch networks by specifying architectures.
 
 ## Installation
 
@@ -28,7 +28,7 @@ The custom modules are defined in [`torcharc/module`](https://github.com/kengz/t
 The full examples of architecture references are in [`torcharc/arc_ref.py`](https://github.com/kengz/torcharc/blob/master/torcharc/arc_ref.py), and full functional examples are in [`test/module/`](https://github.com/kengz/torcharc/tree/master/test/module). Below we walk through some main examples.
 
 
-#### ConvNet
+### ConvNet
 
 ```python
 import torcharc
@@ -55,6 +55,7 @@ y = model(x)
 
 <details><summary>model</summary>
 <p>
+
 ```
 Sequential(
   (0): Conv2d(3, 16, kernel_size=(4, 4), stride=(2, 2))
@@ -67,11 +68,12 @@ Sequential(
   (7): Dropout2d(p=0.2, inplace=False)
 )
 ```
+
 </p>
 </details>
 
 
-#### MLP
+### MLP
 
 ```python
 arc = {
@@ -92,6 +94,7 @@ y = model(x)
 
 <details><summary>model</summary>
 <p>
+
 ```
 Sequential(
   (0): Linear(in_features=8, out_features=64, bias=True)
@@ -104,11 +107,12 @@ Sequential(
   (7): Dropout(p=0.2, inplace=False)
 )
 ```
+
 </p>
 </details>
 
 
-#### Time-Series Transformer
+### Time-Series Transformer
 
 ```python
 arc = {
@@ -137,6 +141,7 @@ x = torch.rand([seq_len, arc['in_channels']])
 
 <details><summary>model</summary>
 <p>
+
 ```
 TSTransformer(
   (in_embedding): Linear(in_features=1, out_features=64, bias=True)
@@ -298,11 +303,12 @@ TSTransformer(
   (out_linear): Linear(in_features=64, out_features=1, bias=True)
 )
 ```
+
 </p>
 </details>
 
 
-#### DAG: Hydra
+### DAG: Hydra
 
 Ultimately, we can build a generic DAG network using the modules linked by the fork and merge modules. The example below shows HydraNet - a network with multiple inputs and multiple outputs.
 
@@ -359,6 +365,7 @@ ys = model(xs)
 
 <details><summary>model</summary>
 <p>
+
 ```
 DAGNet(
   (module_dict): ModuleDict(
@@ -392,6 +399,7 @@ DAGNet(
   )
 )
 ```
+
 </p>
 </details>
 
