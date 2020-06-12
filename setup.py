@@ -42,7 +42,11 @@ setup(
     url='https://github.com/kengz/torcharc',
     author='kengz',
     author_email='kengzwl@gmail.com',
-    packages=['torcharc'],
+    packages=[
+        'torcharc',
+        'torcharc.module',
+        'torcharc.module.transformer',
+    ],
     install_requires=[
         'numpy>=1.16.1',
         'pydash==4.7.6',
