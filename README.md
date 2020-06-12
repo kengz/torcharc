@@ -9,7 +9,11 @@ pip install torcharc
 pip install git+https://github.com/kengz/transformer.git
 ```
 
-Bring your own PyTorch: this allows you to use the version of PyTorch as needed - GPU/CPU, nightly etc.
+Bring your own PyTorch: this allows you to use the version of PyTorch as needed - GPU/CPU, nightly etc. For example:
+
+```bash
+conda install pytorch -c pytorch
+```
 
 ## Usage
 
