@@ -1,5 +1,5 @@
-# TorchArc
-TorchArc: Build PyTorch networks by specifying architectures.
+# TorchArc ![CI](https://github.com/kengz/torcharc/workflows/CI/badge.svg)
+Build PyTorch networks by specifying architectures.
 
 ## Installation
 
