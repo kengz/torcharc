@@ -35,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='0.0.2',
+    version='0.0.3',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',
