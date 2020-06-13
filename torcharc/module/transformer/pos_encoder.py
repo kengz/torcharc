@@ -76,9 +76,10 @@ class LearnedPE(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_seq_len: int = 128) -> None:
         super().__init__()
         self.pos_embedding = nn.Embedding(max_seq_len, d_model)
-        self.idxs = torch.arange(max_seq_len, dtype=torch.long).unsqueeze(0)
+        idxs = torch.arange(max_seq_len, dtype=torch.long).unsqueeze(0)
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-12)
         self.dropout = nn.Dropout(dropout)
+        self.register_buffer('idxs', idxs)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''x shape is NLC (batch, seq_len, channels) to follow transformer convention of seq_len-first'''
