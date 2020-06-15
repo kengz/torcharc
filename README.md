@@ -358,7 +358,7 @@ batch_size = 16
 dag_in_shape = arc['dag_in_shape']
 data = {'image': torch.rand([batch_size, *dag_in_shape['image']]), 'vector': torch.rand([batch_size, *dag_in_shape['vector']])}
 # convert from a dict of Tensors into a TensorTuple - a namedtuple
-xs = torcharc.net_util.to_namedtuple(data)
+xs = torcharc.to_namedtuple(data)
 # returns TensorTuple if output is multi-model, Tensor otherwise
 ys = model(xs)
 ```

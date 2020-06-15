@@ -1,4 +1,5 @@
 from torcharc import module_builder
+from torcharc.net_util import to_namedtuple
 from torcharc.module import dag
 from torch import nn
 
