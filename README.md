@@ -83,7 +83,10 @@ arc = {
     'batch_norm': True,
     'activation': 'ReLU',
     'dropout': 0.2,
-    'init': 'kaiming_uniform_',
+    'init': {
+      'type': 'normal_',
+      'std': 0.01,
+    },
 }
 model = torcharc.build(arc)
 
