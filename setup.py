@@ -35,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='0.0.4',
+    version='0.0.5',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',
@@ -57,6 +57,8 @@ setup(
     extras_require={},
     classifiers=[],
     tests_require=[
+        'autopep8==1.5.3',
+        'flake8==3.8.3',
         'flaky==3.6.1',
         'pytest==5.4.1',
         'pytest-cov==2.8.1',

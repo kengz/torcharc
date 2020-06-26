@@ -24,23 +24,34 @@ setattr(torch.optim, 'Lookahead', optim.Lookahead)
 setattr(torch.optim, 'RAdam', optim.RAdam)
 
 
-def get_init_fn(init: str, activation: Optional[str] = None) -> Callable:
+def get_init_fn(init: Union[str, dict], activation: Optional[str] = None) -> Callable:
     '''Get init function that can be called as `module.apply(init_fn)`. Initializes weights only. Internally this also takes care of gain and nonlinearity args. Ref: https://pytorch.org/docs/stable/nn.init.html'''
     def init_fn(module: nn.Module) -> None:
-        fn = getattr(nn.init, init)
+        if init is None:
+            return
+        elif ps.is_string(init):
+            init_type = init
+            init_kwargs = {}
+        else:
+            assert ps.is_dict(init)
+            init_type = init['type']
+            init_kwargs = ps.omit(init, 'type')
+        fn = getattr(nn.init, init_type)
         args = inspect.getfullargspec(fn).args
         try:
             try:
                 # first try with gain/activation args
                 if 'gain' in args:
                     gain = nn.init.calculate_gain(activation)
-                    fn(module.weight, gain=gain)
+                    ext_init_kwargs = {'gain': gain, **init_kwargs}
+                    fn(module.weight, **ext_init_kwargs)
                 elif 'nonlinearity' in args:
-                    fn(module.weight, nonlinearity=activation)
+                    ext_init_kwargs = {'nonlinearity': activation, **init_kwargs}
+                    fn(module.weight, **ext_init_kwargs)
                 else:
-                    fn(module.weight)
+                    fn(module.weight, **init_kwargs)
             except Exception:  # first fallback to plain init
-                fn(module.weight)
+                fn(module.weight, **init_kwargs)
         except Exception:  # second fallback: module weight cannot be initialized, ok
             pass
     return init_fn
@@ -51,7 +62,7 @@ def build_module(arc: dict) -> nn.Module:
     if arc.get('layers'):  # if given layers, build as sequential
         module = sequential.build(arc)
     else:
-        kwargs = ps.omit(arc, 'type', 'in_names')
+        kwargs = ps.omit(arc, 'type', 'in_names', 'init')
         module = getattr(nn, arc['type'])(**kwargs)
     # initialize weights if 'init' is given
     if arc.get('init'):

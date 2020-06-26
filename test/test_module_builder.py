@@ -88,6 +88,7 @@ def test_build_module(arc, nn_class):
     'kaiming_uniform_',
     'kaiming_normal_',
     'orthogonal_',
+    {'type': 'normal_', 'std': 0.01},  # when using init kwargs
 ])
 @pytest.mark.parametrize('activation', [
     'ReLU',
