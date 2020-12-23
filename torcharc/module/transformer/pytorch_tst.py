@@ -47,6 +47,7 @@ class PTTSTransformer(nn.Module):
             q: int = 8,  # Dimension of queries and keys.
             v: int = 8,  # Dimension of values.
             chunk_mode: bool = 'chunk',
+            scalar_output: bool = False,
     ) -> None:
         super().__init__()
 
@@ -66,6 +67,7 @@ class PTTSTransformer(nn.Module):
         self.decoders = nn.TransformerDecoder(decoder_layer, num_layers=num_decoder_layers)
 
         self.out_linear = nn.Linear(d_model, out_channels)
+        self.scalar_output = scalar_output
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''
@@ -78,9 +80,13 @@ class PTTSTransformer(nn.Module):
         encoding = self.encoders(encoding.transpose(0, 1))
 
         decoding = encoding
-        if self.pe is not None:  # position encoding
-            decoding = self.pe(decoding.transpose(0, 1)).transpose(0, 1)
-        decoding = self.decoders(decoding, encoding).transpose(0, 1)
+        if len(self.decoders.layers):
+            if self.pe is not None:  # position encoding
+                decoding = self.pe(decoding.transpose(0, 1)).transpose(0, 1)
+            decoding = self.decoders(decoding, encoding).transpose(0, 1)
+
+        if self.scalar_output:  # if want scalar instead of seq output, take the first index from seq
+            decoding = decoding[:, 0, :]
 
         output = self.out_linear(decoding)
         return output
