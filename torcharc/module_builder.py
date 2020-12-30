@@ -91,7 +91,7 @@ def infer_in_shape(arc: dict, xs: Union[torch.Tensor, NamedTuple]) -> None:
         arc.update(in_shape=in_shape)
     elif nn_type == 'FiLMMerge':
         assert ps.is_tuple(xs)
-        assert len(arc['in_names']) == 2, f'FiLMMerge in_names should only specify 2 keys for feature and conditioner'
+        assert len(arc['in_names']) == 2, 'FiLMMerge in_names should only specify 2 keys for feature and conditioner'
         shapes = {name: list(x.shape)[1:] for name, x in xs._asdict().items() if name in arc['in_names']}
         arc.update(shapes=shapes)
     else:
