@@ -49,6 +49,7 @@ class TSTransformer(nn.Module):
             q: int = 8,  # Dimension of queries and keys.
             v: int = 8,  # Dimension of values.
             chunk_mode: bool = 'chunk',
+            scalar_output: bool = False,
     ) -> None:
         super().__init__()
 
@@ -77,6 +78,7 @@ class TSTransformer(nn.Module):
             activation=activation,
             chunk_mode=chunk_mode) for _ in range(num_decoder_layers)])
         self.out_linear = nn.Linear(d_model, out_channels)
+        self.scalar_output = scalar_output
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''
@@ -89,10 +91,14 @@ class TSTransformer(nn.Module):
         encoding = self.encoders(encoding)
 
         decoding = encoding
-        if self.pe is not None:  # position encoding
-            decoding = self.pe(decoding)
-        for layer in self.decoders:
-            decoding = layer(decoding, encoding)
+        if len(self.decoders):
+            if self.pe is not None:  # position encoding
+                decoding = self.pe(decoding)
+            for layer in self.decoders:
+                decoding = layer(decoding, encoding)
+
+        if self.scalar_output:  # if want scalar instead of seq output, take the first index from seq
+            decoding = decoding[:, 0, :]
 
         output = self.out_linear(decoding)
         return output
