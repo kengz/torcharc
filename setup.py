@@ -11,9 +11,6 @@ test_args = [
     '--log-file-level=INFO',
     '--no-flaky-report',
     '--timeout=300',
-    '--cov-report=html',
-    '--cov-report=term',
-    '--cov-report=xml',
     '--cov=torcharc',
     'test',
 ]
