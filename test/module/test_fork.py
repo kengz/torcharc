@@ -1,5 +1,4 @@
 from torcharc.module.fork import Fork, ReuseFork, SplitFork
-import pydash as ps
 import pytest
 import torch
 
@@ -14,8 +13,8 @@ def test_reuse_fork(names, x):
     fork = ReuseFork(names)
     assert isinstance(fork, Fork)
     ys = fork(x)
-    assert ps.is_tuple(ys)
-    assert ys._fields == tuple(names)
+    assert isinstance(ys, dict)
+    assert list(ys) == names
 
 
 @pytest.mark.parametrize('shapes,x', [
@@ -28,5 +27,5 @@ def test_split_fork(shapes, x):
     fork = SplitFork(shapes)
     assert isinstance(fork, Fork)
     ys = fork(x)
-    assert ps.is_tuple(ys)
-    assert ys._fields == tuple(shapes.keys())
+    assert isinstance(ys, dict)
+    assert ys.keys() == shapes.keys()

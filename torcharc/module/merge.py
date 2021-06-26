@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from torch import nn
-from typing import Dict, List, NamedTuple
+from typing import Dict, List
 import torch
 
 
@@ -8,15 +8,15 @@ class Merge(ABC, nn.Module):
     '''A Merge module merges a dict of tensors into one tensor'''
 
     @abstractmethod
-    def forward(self, xs: NamedTuple) -> torch.Tensor:  # pragma: no cover
+    def forward(self, xs: dict) -> torch.Tensor:  # pragma: no cover
         raise NotImplementedError
 
 
 class ConcatMerge(Merge):
     '''Merge layer to merge a dict of tensors by concatenating along dim=1. Reverse of Split'''
 
-    def forward(self, xs: NamedTuple) -> torch.Tensor:
-        return torch.cat(xs, dim=1)
+    def forward(self, xs: dict) -> torch.Tensor:
+        return torch.cat(list(xs.values()), dim=1)
 
 
 class FiLMMerge(Merge):
@@ -43,10 +43,10 @@ class FiLMMerge(Merge):
         view_shape = list(conditioner_scale.shape) + [1] * (feature.dim() - conditioner_scale.dim())
         return conditioner_scale.view(*view_shape) * feature + conditioner_shift.view(*view_shape)
 
-    def forward(self, xs: NamedTuple) -> torch.Tensor:
+    def forward(self, xs: dict) -> torch.Tensor:
         '''Apply FiLM affine transform on feature using conditioner'''
-        feature = getattr(xs, self.feature_name)
-        conditioner = getattr(xs, self.conditioner_name)
+        feature = xs[self.feature_name]
+        conditioner = xs[self.conditioner_name]
         conditioner_scale = self.conditioner_scale(conditioner)
         conditioner_shift = self.conditioner_shift(conditioner)
         return self.affine_transform(feature, conditioner_scale, conditioner_shift)

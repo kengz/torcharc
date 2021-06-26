@@ -1,7 +1,7 @@
 # build DAG of nn modules
 from torcharc import module_builder, net_util
 from torch import nn
-from typing import NamedTuple, Union
+from typing import Union
 import pydash as ps
 import torch
 
@@ -30,10 +30,8 @@ class DAGNet(nn.Module):
             xs = module_builder.carry_forward(module, xs, m_arc.get('in_names'))
             self.module_dict.update({name: module})
 
-    def forward(self, xs: Union[torch.Tensor, NamedTuple]) -> Union[torch.Tensor, NamedTuple]:
-        # jit.trace will spread args on encountering a namedtuple, thus xs needs to be passed as dict then converted back into namedtuple
-        if ps.is_dict(xs):  # guard to convert dict xs into namedtuple
-            xs = net_util.to_namedtuple(xs)
+    def forward(self, xs: Union[torch.Tensor, dict]) -> Union[torch.Tensor, dict]:
+        # safe for jit.trace
         for name, module in self.module_dict.items():
             m_arc = self.arc[name]
             xs = module_builder.carry_forward(module, xs, m_arc.get('in_names'))

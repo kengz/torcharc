@@ -1,7 +1,6 @@
 from fixture.net import CONV1D_ARC, CONV2D_ARC, CONV3D_ARC, LINEAR_ARC
 from torcharc import module_builder, net_util
 from torch import nn
-import pydash as ps
 import pytest
 import torch
 
@@ -39,7 +38,7 @@ def test_get_rand_tensor(shape, batch_size, tensor_shape):
 ])
 def test_get_rand_tensor_dict(shapes, batch_size, tensor_shapes):
     xs = net_util.get_rand_tensor(shapes, batch_size)
-    assert ps.is_tuple(xs)
+    assert isinstance(xs, dict)
     for name, tensor_shape in tensor_shapes.items():
-        x = getattr(xs, name)
+        x = xs[name]
         assert list(x.shape) == tensor_shape
