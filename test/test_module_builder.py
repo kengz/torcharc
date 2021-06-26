@@ -1,7 +1,6 @@
 from fixture.net import CONV1D_ARC, CONV2D_ARC, CONV3D_ARC, LINEAR_ARC
 from torcharc import module_builder, net_util
 from torch import nn
-import pydash as ps
 import pytest
 import torch
 
@@ -27,7 +26,7 @@ import torch
 ])
 def test_get_init_fn(init, activation):
     init_fn = module_builder.get_init_fn(init, activation)
-    assert ps.is_function(init_fn)
+    assert callable(init_fn)
 
 
 @pytest.mark.parametrize('arc,nn_class', [
@@ -248,11 +247,11 @@ def test_carry_forward_tensor(arc, xs):
         net_util.get_rand_tensor({'vector': [LINEAR_ARC['in_features']], 'image': CONV2D_ARC['in_shape']}),
     )
 ])
-def test_carry_forward_tensor_tuple_default(arc, xs):
+def test_carry_forward_dict_default(arc, xs):
     module = module_builder.build_module(arc)
-    assert ps.is_tuple(xs)
+    assert isinstance(xs, dict)
     ys = module_builder.carry_forward(module, xs)
-    assert ps.is_tuple(ys)
+    assert isinstance(ys, dict)
 
 
 @pytest.mark.parametrize('xs', [
@@ -281,8 +280,8 @@ def test_carry_forward_tensor_tuple_default(arc, xs):
         ['image', 'vector'],
     )
 ])
-def test_carry_forward_tensor_tuple(arc, xs, in_names):
+def test_carry_forward_dict(arc, xs, in_names):
     module = module_builder.build_module(arc)
-    assert ps.is_tuple(xs)
+    assert isinstance(xs, dict)
     ys = module_builder.carry_forward(module, xs, in_names)
-    assert isinstance(ys, (torch.Tensor, tuple))
+    assert isinstance(ys, (torch.Tensor, dict))

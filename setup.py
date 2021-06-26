@@ -11,9 +11,6 @@ test_args = [
     '--log-file-level=INFO',
     '--no-flaky-report',
     '--timeout=300',
-    '--cov-report=html',
-    '--cov-report=term',
-    '--cov-report=xml',
     '--cov=torcharc',
     'test',
 ]
@@ -35,7 +32,7 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='0.0.6',
+    version='1.0.0',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',

@@ -16,7 +16,7 @@ import torch
 def test_concat_merge(xs, out_shape):
     merge = ConcatMerge()
     assert isinstance(merge, Merge)
-    y = merge(net_util.to_namedtuple(xs))
+    y = merge(xs)
     assert y.shape == torch.Size(out_shape)
 
 
@@ -56,5 +56,5 @@ def test_film_affine_transform(feature):
 def test_film_merge(names, shapes, xs):
     merge = FiLMMerge(names, shapes)
     assert isinstance(merge, Merge)
-    y = merge(net_util.to_namedtuple(xs))
+    y = merge(xs)
     assert y.shape == xs[names['feature']].shape
