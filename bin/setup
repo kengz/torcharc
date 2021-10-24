@@ -28,7 +28,7 @@ else
     conda create -n torcharc python=3.8.2 -y
     # Install ipykernel
     conda activate torcharc
-    conda install ipykernel
+    conda install ipykernel -y
     python -m ipykernel install --user --name torcharc
 fi
 
