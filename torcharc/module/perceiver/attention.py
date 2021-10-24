@@ -1,4 +1,4 @@
-# basic modules for Perceiver
+# basic modules for Perceiver based on https://github.com/deepmind/deepmind-research/tree/master/perceiver
 from torch import nn
 import einops
 import torch
@@ -8,6 +8,7 @@ def attend(q, k, v, mask=None):
     '''
     Compute multi-head attention using query, key, value.
     softmax((q.k)/sqrt(head_dim)).v
+    NOTE no dropout is implemented here since Deepmind finds it deteriorates performance
     @param q: query tensor of shape [batch, q_idx, num_heads, head_dim]
     @param k: key tensor of shape [batch, kv_idx, num_heads, head_dim] (kv_idx means k_idx = v_idx)
     @param v: value tensor of shape [batch, kv_idx, num_heads, head_dim] (kv_idx means k_idx = v_idx)
@@ -36,7 +37,7 @@ class Attention(nn.Module):
     multi-head: z = (softmax((q.k)/sqrt(head_dim)).v) . W_z
     '''
 
-    def __init__(self, embed_dim, context_dim=None, head_dim=64, num_heads=8):
+    def __init__(self, embed_dim, context_dim=None, head_dim=64, num_heads=8, dropout_p=0.0):
         super().__init__()
         self.head_dim = head_dim
         self.num_heads = num_heads
@@ -51,6 +52,7 @@ class Attention(nn.Module):
         self.to_flat_kv = nn.Linear(context_dim, 2 * multi_head_dim, bias=True)
         # to reduce multi-head z to one z
         self.to_z = nn.Linear(multi_head_dim, embed_dim)
+        self.dropout = nn.Dropout(p=dropout_p)
 
     def forward(self, x, context=None, mask=None):
         '''Compute multi-head attention'''
@@ -66,4 +68,65 @@ class Attention(nn.Module):
         # now combine multi-head z's into one z
         flat_z = einops.rearrange(multi_z, 'b t h d -> b t (h d)')
         z = self.to_z(flat_z)
-        return z
+        return self.dropout(z)
+
+
+class PostAttentionMLP(nn.Module):
+    '''
+    Transformer-style MLP to follow attention
+    NOTE no dropout is implemented here since Deepmind finds it deteriorates performance
+    '''
+
+    def __init__(self, embed_dim, widening_factor=4, dropout_p=0.0):
+        super().__init__()
+        self.module = nn.Sequential(
+            nn.LayerNorm(embed_dim),
+            nn.Linear(embed_dim, embed_dim * widening_factor),
+            nn.GELU(),
+            nn.Linear(embed_dim * widening_factor, embed_dim),
+            nn.Dropout(p=dropout_p),
+        )
+
+    def forward(self, x):
+        return self.module(x)
+
+
+class SelfAttention(nn.Module):
+    def __init__(
+            self, embed_dim,
+            head_dim=64, num_heads=8,
+            widening_factor=4, dropout_p=0.0):
+        super().__init__()
+        self.attn = Attention(embed_dim, head_dim=head_dim, num_heads=num_heads, dropout_p=dropout_p)
+        self.layer_norm = nn.LayerNorm(embed_dim)
+        self.mlp = PostAttentionMLP(embed_dim, widening_factor, dropout_p)
+
+    def forward(self, x, mask=None):
+        attn = self.attn(self.layer_norm(x), mask=mask)
+        x += attn
+        x += self.mlp(x)
+        return x
+
+
+class CrossAttention(nn.Module):
+    '''Cross-attention: when k,v are generated from a different embedding (context) than q'''
+
+    def __init__(
+            self, embed_dim, context_dim,
+            use_query_residual=True,
+            head_dim=64, num_heads=8,
+            widening_factor=4, dropout_p=0.0):
+        super().__init__()
+        self.use_query_residual = use_query_residual
+        self.attn = Attention(embed_dim, context_dim, head_dim, num_heads, dropout_p)
+        self.embed_layer_norm = nn.LayerNorm(embed_dim)
+        self.context_layer_norm = nn.LayerNorm(context_dim)
+        self.mlp = PostAttentionMLP(embed_dim, widening_factor, dropout_p)
+
+    def forward(self, x, context, mask=None):
+        attn = self.attn(self.embed_layer_norm(x), context=self.context_layer_norm(context), mask=mask)
+        x = x + attn if self.use_query_residual else attn
+        x += self.mlp(x)
+        return x
+
+# TODO do I layer-norm the input before passing into attention?
