@@ -32,6 +32,9 @@ else
     python -m ipykernel install --user --name torcharc
 fi
 
+echo "--- Updating Conda environment ---"
+conda env update -f environment.yml
+
 echo "--- Installing torcharc as module ---"
 conda activate torcharc
 pip install -e .

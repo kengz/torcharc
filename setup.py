@@ -47,6 +47,7 @@ setup(
     install_requires=[
         'numpy>=1.16.1',
         'pydash==4.7.6',
+        'einops>=0.3.0',
     ],
     zip_safe=False,
     include_package_data=True,
