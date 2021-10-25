@@ -1,10 +1,49 @@
 # basic modules for Perceiver based on https://github.com/deepmind/deepmind-research/tree/master/perceiver
+from einops import rearrange
 from torch import nn
-import einops
 import torch
 
 
-def attend(q, k, v, mask=None):
+class TransformerMLP(nn.Module):
+    '''Transformer-style MLP to follow attention'''
+
+    def __init__(self, embed_dim: int, widening_factor: int = 4):
+        super().__init__()
+        self.module = nn.Sequential(
+            nn.LayerNorm(embed_dim),
+            nn.Linear(embed_dim, embed_dim * widening_factor),
+            nn.GELU(),
+            nn.Linear(embed_dim * widening_factor, embed_dim),
+        )
+
+    def forward(self, x: torch.Tensor):
+        return self.module(x)
+
+
+class Residual(nn.Module):
+    '''Compute residual with dropout, i.e. residual = x + dropout(module(x))'''
+
+    def __init__(self, module: nn.Module, dropout_p: float = 0.0):
+        super().__init__()
+        self.module = module
+        self.dropout = nn.Dropout(p=dropout_p)
+        self.dropout_p = dropout_p
+
+    def forward(self, *args, **kwargs):
+        x = self.module(*args, **kwargs)
+        return self.dropout(x) + args[0]
+
+
+class SpreadSequential(nn.Sequential):
+    '''Sequential with auto-spread on multiple input arguments since PyTorch Sequential can't handle it'''
+
+    def forward(self, *inputs):
+        for module in self:
+            inputs = module(*inputs) if isinstance(inputs, tuple) else module(inputs)
+        return inputs
+
+
+def attend(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
     '''
     Compute multi-head attention using query, key, value.
     softmax((q.k)/sqrt(head_dim)).v
@@ -21,7 +60,7 @@ def attend(q, k, v, mask=None):
 
     if mask is not None:
         max_neg_value = -torch.finfo(score.dtype).max
-        score.masked_fill_(einops.rearrange(~mask, 'b t T -> b () t T'), max_neg_value)
+        score.masked_fill_(rearrange(~mask, 'b t T -> b () t T'), max_neg_value)
 
     norm_score = score.softmax(dim=-1)
     z = torch.einsum('b h t T, b T h d -> b t h d', norm_score, v)
@@ -30,14 +69,14 @@ def attend(q, k, v, mask=None):
 
 class Attention(nn.Module):
     '''
-    Multi-headed {cross, self}-attention.
-    Cross attention when context is different from x (embedding)
+    Custom Multi-headed {cross, self}-attention that allows you to specify embed_dim vs head_dim
+    Cross attention is when context is different from x (embedding)
     Ref: https://jalammar.github.io/illustrated-transformer/
     single-head: z = softmax((q.k)/sqrt(head_dim)).v
     multi-head: z = (softmax((q.k)/sqrt(head_dim)).v) . W_z
     '''
 
-    def __init__(self, embed_dim, context_dim=None, head_dim=64, num_heads=8, dropout_p=0.0):
+    def __init__(self, embed_dim: int, context_dim: int = None, head_dim: int = 64, num_heads: int = 8):
         super().__init__()
         self.head_dim = head_dim
         self.num_heads = num_heads
@@ -52,81 +91,65 @@ class Attention(nn.Module):
         self.to_flat_kv = nn.Linear(context_dim, 2 * multi_head_dim, bias=True)
         # to reduce multi-head z to one z
         self.to_z = nn.Linear(multi_head_dim, embed_dim)
-        self.dropout = nn.Dropout(p=dropout_p)
 
-    def forward(self, x, context=None, mask=None):
+    def forward(self, x: torch.Tensor, context: torch.Tensor = None, mask: torch.Tensor = None):
         '''Compute multi-head attention'''
         flat_q = self.to_flat_q(x)
         context = x if context is None else context
         flat_k, flat_v = self.to_flat_kv(context).chunk(2, dim=-1)
         # unflatten to (num_heads, head_dim) for attention, shape (batch index num_heads head_dim)
-        q = einops.rearrange(flat_q, 'b t (h d) -> b t h d', h=self.num_heads)
-        k = einops.rearrange(flat_k, 'b t (h d) -> b t h d', h=self.num_heads)
-        v = einops.rearrange(flat_v, 'b t (h d) -> b t h d', h=self.num_heads)
+        q = rearrange(flat_q, 'b t (h d) -> b t h d', h=self.num_heads)
+        k = rearrange(flat_k, 'b t (h d) -> b t h d', h=self.num_heads)
+        v = rearrange(flat_v, 'b t (h d) -> b t h d', h=self.num_heads)
 
         multi_z = attend(q, k, v, mask=mask)
         # now combine multi-head z's into one z
-        flat_z = einops.rearrange(multi_z, 'b t h d -> b t (h d)')
+        flat_z = rearrange(multi_z, 'b t h d -> b t (h d)')
         z = self.to_z(flat_z)
-        return self.dropout(z)
-
-
-class PostAttentionMLP(nn.Module):
-    '''
-    Transformer-style MLP to follow attention
-    NOTE no dropout is implemented here since Deepmind finds it deteriorates performance
-    '''
-
-    def __init__(self, embed_dim, widening_factor=4, dropout_p=0.0):
-        super().__init__()
-        self.module = nn.Sequential(
-            nn.LayerNorm(embed_dim),
-            nn.Linear(embed_dim, embed_dim * widening_factor),
-            nn.GELU(),
-            nn.Linear(embed_dim * widening_factor, embed_dim),
-            nn.Dropout(p=dropout_p),
-        )
-
-    def forward(self, x):
-        return self.module(x)
+        return z
 
 
 class SelfAttention(nn.Module):
-    def __init__(
-            self, embed_dim,
-            head_dim=64, num_heads=8,
-            widening_factor=4, dropout_p=0.0):
-        super().__init__()
-        self.attn = Attention(embed_dim, head_dim=head_dim, num_heads=num_heads, dropout_p=dropout_p)
-        self.layer_norm = nn.LayerNorm(embed_dim)
-        self.mlp = PostAttentionMLP(embed_dim, widening_factor, dropout_p)
+    '''Self-attention: the OG attention layer where q,k,v are generated from the  same embedding.'''
 
-    def forward(self, x, mask=None):
-        attn = self.attn(self.layer_norm(x), mask=mask)
-        x += attn
-        x += self.mlp(x)
-        return x
+    def __init__(self, embed_dim: int, head_dim: int = 64, num_heads: int = 8):
+        super().__init__()
+        self.attn = Attention(embed_dim, head_dim=head_dim, num_heads=num_heads)
+        self.layer_norm = nn.LayerNorm(embed_dim)
+
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None):
+        return self.attn(self.layer_norm(x), mask=mask)
 
 
 class CrossAttention(nn.Module):
     '''Cross-attention: when k,v are generated from a different embedding (context) than q'''
 
-    def __init__(
-            self, embed_dim, context_dim,
-            use_query_residual=True,
-            head_dim=64, num_heads=8,
-            widening_factor=4, dropout_p=0.0):
+    def __init__(self, embed_dim: int, context_dim: int, head_dim: int = 64, num_heads: int = 8):
         super().__init__()
-        self.use_query_residual = use_query_residual
-        self.attn = Attention(embed_dim, context_dim, head_dim, num_heads, dropout_p)
+        self.attn = Attention(embed_dim, context_dim, head_dim, num_heads)
         self.embed_layer_norm = nn.LayerNorm(embed_dim)
         self.context_layer_norm = nn.LayerNorm(context_dim)
-        self.mlp = PostAttentionMLP(embed_dim, widening_factor, dropout_p)
 
-    def forward(self, x, context, mask=None):
-        attn = self.attn(self.embed_layer_norm(x), context=self.context_layer_norm(context), mask=mask)
-        x = x + attn if self.use_query_residual else attn
-        x += self.mlp(x)
-        return x
+    def forward(self, x: torch.Tensor, context: torch.Tensor, mask: torch.Tensor = None):
+        return self.attn(self.embed_layer_norm(x), context=self.context_layer_norm(context), mask=mask)
 
-# TODO do I layer-norm the input before passing into attention?
+
+def build_self_attn_layer(embed_dim: int, head_dim: int = 64, num_heads: int = 8, widening_factor: int = 4, dropout_p: float = 0.0) -> nn.Sequential:
+    '''Build a self-attention layer as SelfAttention->Residual->TransformerMLP->Residual'''
+    return nn.Sequential(
+        Residual(SelfAttention(embed_dim, head_dim, num_heads), dropout_p),
+        Residual(TransformerMLP(embed_dim, widening_factor), dropout_p)
+    )
+
+
+def build_self_attn_block(num_self_attn_per_block: int, embed_dim: int, head_dim: int = 64, num_heads: int = 8, widening_factor: int = 4, dropout_p: float = 0.0) -> nn.Sequential:
+    '''Build a block composed of multiple self-attention layer, i.e. n * [SelfAttention->Residual->TransformerMLP->Residual]'''
+    return nn.Sequential(*[build_self_attn_layer(embed_dim, head_dim, num_heads, widening_factor, dropout_p) for _ in range(num_self_attn_per_block)])
+
+
+def build_cross_attn_layer(embed_dim: int, context_dim: int, head_dim: int = 64, num_heads: int = 8, widening_factor: int = 4, dropout_p: float = 0.0) -> SpreadSequential:
+    '''Build a cross-attention layer as CrossAttention->Residual->TransformerMLP->Residual'''
+    return SpreadSequential(
+        Residual(CrossAttention(embed_dim, context_dim, head_dim, num_heads), dropout_p),
+        Residual(TransformerMLP(embed_dim, widening_factor), dropout_p)
+    )
