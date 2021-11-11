@@ -43,7 +43,7 @@ def test_attend(shape, mask):
 
 @pytest.mark.parametrize('embed,context', [
     (torch.rand((2, 4, 11)), None),   # shape (batch index embed_dim)
-    (torch.rand((2, 4, 11)), torch.rand((2, 4, 13))),
+    (torch.rand((2, 4, 11)), torch.rand((2, 3, 13))),
 ])
 @pytest.mark.parametrize('head_dim', [64])
 @pytest.mark.parametrize('v_head_dim', [None, 32])
@@ -71,7 +71,7 @@ def test_self_attention(embed, head_dim, num_heads, v_head_dim):
 
 
 @pytest.mark.parametrize('embed', [torch.rand((2, 4, 11))])
-@pytest.mark.parametrize('context', [torch.rand((2, 4, 13))])
+@pytest.mark.parametrize('context', [torch.rand((2, 3, 13))])
 @pytest.mark.parametrize('head_dim', [64])
 @pytest.mark.parametrize('v_head_dim', [None, 32])
 @pytest.mark.parametrize('num_heads', [1, 8])
@@ -115,7 +115,7 @@ def test_build_self_attn_block(num_self_attn_per_block, embed, head_dim, v_head_
 
 
 @pytest.mark.parametrize('embed', [torch.rand((2, 4, 11))])
-@pytest.mark.parametrize('context', [torch.rand((2, 4, 13))])
+@pytest.mark.parametrize('context', [torch.rand((2, 3, 13))])
 @pytest.mark.parametrize('head_dim', [64])
 @pytest.mark.parametrize('v_head_dim', [None, 32])
 @pytest.mark.parametrize('num_heads', [1, 8])
@@ -124,45 +124,6 @@ def test_build_cross_attn_layer(embed, context, head_dim, v_head_dim, num_heads,
     embed_dim = embed.shape[-1]
     context_dim = context.shape[-1]
     module = attention.build_cross_attn_layer(embed_dim, context_dim, head_dim=head_dim, v_head_dim=v_head_dim, num_heads=num_heads, widening_factor=widening_factor)
-    out = module(embed, context)
-    assert out.shape == embed.shape
-    assert not out.isnan().any()
-    out.mean().backward()
-
-
-@pytest.mark.parametrize('embed', [torch.rand((2, 4, 11))])
-@pytest.mark.parametrize('context', [torch.rand((2, 4, 13))])
-@pytest.mark.parametrize('head_dim', [64])
-@pytest.mark.parametrize('v_head_dim', [None, 32])
-@pytest.mark.parametrize('cross_attn_num_heads', [1, 8])
-@pytest.mark.parametrize('cross_attn_widening_factor', [1, 4])
-@pytest.mark.parametrize('num_self_attn_blocks', [8])
-@pytest.mark.parametrize('num_self_attn_per_block', [1, 4])
-@pytest.mark.parametrize('self_attn_num_heads', [1, 8])
-@pytest.mark.parametrize('self_attn_widening_factor', [1, 4])
-@pytest.mark.parametrize('dropout_p', [0.0, 0.5])
-def test_build_perceiver_layer(
-        embed, context, head_dim, v_head_dim,
-        cross_attn_num_heads,
-        cross_attn_widening_factor,
-        num_self_attn_blocks,
-        num_self_attn_per_block,
-        self_attn_num_heads,
-        self_attn_widening_factor,
-        dropout_p):
-    embed_dim = embed.shape[-1]
-    context_dim = context.shape[-1]
-    module = attention.build_perceiver_layer(
-        embed_dim, context_dim,
-        head_dim=head_dim, v_head_dim=v_head_dim,
-        cross_attn_num_heads=cross_attn_num_heads,
-        cross_attn_widening_factor=cross_attn_widening_factor,
-        num_self_attn_blocks=num_self_attn_blocks,
-        num_self_attn_per_block=num_self_attn_per_block,
-        self_attn_num_heads=self_attn_num_heads,
-        self_attn_widening_factor=self_attn_widening_factor,
-        dropout_p=dropout_p)
-    assert 2 == len(list(module.children()))  # self_attn_blocks is shared/reused
     out = module(embed, context)
     assert out.shape == embed.shape
     assert not out.isnan().any()
