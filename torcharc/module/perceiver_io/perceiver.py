@@ -21,8 +21,8 @@ class PerceiverEncoder(nn.Module):
     v_head_dim -> v_channels / num_heads, v_head_dim
 
     @example
-    latent_shape = (4, 11)
-    x = torch.rand((2, 3, 13))
+    latent_shape = [4, 11]
+    x = torch.rand([2, 3, 13])
     input_dim = x.shape[-1]
     module = PerceiverEncoder(latent_shape=latent_shape, input_dim=input_dim)
     out = module(x)
@@ -30,7 +30,7 @@ class PerceiverEncoder(nn.Module):
 
     def __init__(
         self,
-        latent_shape: tuple,  # (N, D) for latent array
+        latent_shape: list,  # (N, D) for latent array
         input_dim: int,  # the C of (M, C) for input array
         head_dim: int = 32,
         v_head_dim: int = None,
@@ -80,8 +80,8 @@ class PerceiverDecoder(nn.Module):
     cross_attn_layer: CrossAttention->Residual->TransformerMLP->Residual
 
     @example
-    latent_shape = (4, 11)
-    output_shape = (3, 9)
+    latent_shape = [4, 11]
+    output_shape = [3, 9]
     latent = torch.rand(2, *latent_shape)
     module = PerceiverDecoder(latent_shape=latent_shape, output_shape=output_shape)
     out = module(latent)
@@ -89,8 +89,8 @@ class PerceiverDecoder(nn.Module):
 
     def __init__(
         self,
-        latent_shape: tuple,  # (N, D) for latent array
-        output_shape: tuple,  # (O, E) for output query array
+        latent_shape: list,  # (N, D) for latent array
+        output_shape: list,  # (O, E) for output query array
         head_dim: int = 32,
         v_head_dim: int = None,
         cross_attn_num_heads: int = 1,

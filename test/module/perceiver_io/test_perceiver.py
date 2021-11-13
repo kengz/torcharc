@@ -4,7 +4,7 @@ import torch
 
 
 @pytest.mark.parametrize('batch', [2])
-@pytest.mark.parametrize('latent_shape', [(4, 11)])
+@pytest.mark.parametrize('latent_shape', [[4, 11]])
 @pytest.mark.parametrize('x', [torch.rand((2, 3, 13))])
 @pytest.mark.parametrize('head_dim', [64])
 @pytest.mark.parametrize('v_head_dim', [None, 32])
@@ -40,8 +40,8 @@ def test_perceiver_encoder(
 
 
 @pytest.mark.parametrize('batch', [2])
-@pytest.mark.parametrize('latent_shape', [(4, 11)])
-@pytest.mark.parametrize('output_shape', [(3, 9)])
+@pytest.mark.parametrize('latent_shape', [[4, 11]])
+@pytest.mark.parametrize('output_shape', [[3, 9]])
 @pytest.mark.parametrize('head_dim', [64])
 @pytest.mark.parametrize('v_head_dim', [None, 32])
 @pytest.mark.parametrize('cross_attn_num_heads', [1, 8])
