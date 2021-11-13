@@ -4,17 +4,20 @@ import math
 import torch
 
 
+IdentityPreprocessor = nn.Identity
+
+
 class TextPreprocessor(nn.Module):
     '''Standard text preprocessing for transformer by embedding a tokenized tensor, then adding a learned position encoding.'''
 
-    def __init__(self, vocab_size: int, embed_dim: int, max_seq_len: int = 512):
+    def __init__(self, vocab_size: int, embed_dim: int, max_seq_len: int = 512, **_kwargs):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         # learned position encoding
         self.pos_encoding = nn.Parameter(torch.empty(max_seq_len, embed_dim))
         nn.init.trunc_normal_(self.pos_encoding, mean=0.0, std=0.02)  # Deepmind's init
         self.scale = embed_dim ** 0.5
-        self.output_dim = embed_dim
+        self.out_shape = [max_seq_len, embed_dim]
 
     def forward(self, x):
         batch, seq_len = x.shape
@@ -30,20 +33,30 @@ class FourierPreprocessor(nn.Module):
     then generate the sin, cos frequencies, stack [pos, sin, cos],
     then flatten the meshgrid's spatial dimension into 1D to get the final pos_encoding of shape (x*y*..., d*(2*num_freq_bands+1)).
     When encoding, this flattens the spatial dimensions of input into 1D, e.g. (x, y, ..., c) into (x*y*..., c), then concat it with the pos_encoding, so the final output tensor is a stack of the [flattened input with channels, pos_encoding with d*(2*num_freq_bands+1).
-    The output shape is (x*y*..., output_dim), where output_dim = (c+d*(2*num_freq_bands+1))
+    The output shape is (x*y*..., out_dim), where out_dim = (c+d*(2*num_freq_bands+1))
 
     @example
+    batch = 2
+    in_shape = [64, 3]
+    num_freq_bands = 32
+    x = torch.rand(batch, *in_shape)
+    module = FourierPreprocessor(in_shape, num_freq_bands)
+    out = module(x)
+    assert [math.prod(in_shape[:-1]), module.out_dim] == module.out_shape
+    assert list(out.shape) == [batch, *module.out_shape]
     '''
 
-    def __init__(self, input_shape: list, num_freq_bands: int, cat_pos: bool = True):
+    def __init__(self, in_shape: list, num_freq_bands: int, max_reso: list = None, cat_pos: bool = True):
         super().__init__()
-        *self.spatial_shape, num_c = self.input_shape = list(input_shape)  # shape excluding batch
+        *self.spatial_shape, num_c = self.in_shape = list(in_shape)  # shape excluding batch
         self.num_freq_bands = num_freq_bands
         self.cat_pos = cat_pos
         # create fourier positional encoding
         pos = self.build_positions()
-        self.pos_encoding = self.build_pos_encoding(pos)
-        self.output_dim = num_c + self.get_pos_encoding_dim()  # input_dim to PerceiverEncoder; we stack pos_encoding with top of channels
+        self.pos_encoding = self.build_pos_encoding(pos, max_reso=max_reso)
+        flat_dim = math.prod(in_shape[:-1])
+        self.out_dim = num_c + self.get_pos_encoding_dim()  # in_dim to PerceiverEncoder; we stack pos_encoding with top of channels
+        self.out_shape = [flat_dim, self.out_dim]
 
     def build_positions(self, start: float = -1.0, end: float = 1.0):
         '''Build spatial coordinates as a meshgrid, i.e. coordinates laid out such that values along the channel is a point in coordinate, e.g. shape = (x, y, 2)'''
@@ -54,11 +67,12 @@ class FourierPreprocessor(nn.Module):
         '''
         Generate a Fourier frequency position encoding with linear spacing.
         @param pos: meshgrid position coordinates of shape (x, y, d=len(shape)), e.g. (x, y, 2), or (x, y, z, 3) etc. in general
-        @param max_reso: maximum resolution (pixels) per dimension.
+        @param max_reso: maximum resolution (pixels) per dimension. Useful when input such as picture varies in size
         @param cat_pos: whether to concat pos before the fourier encoding
         @return position encodings tensor of shape (x, y,... d*(2*num_freq_bands+1))
         '''
         max_reso = max_reso or pos.shape[:-1]
+        assert len(max_reso) == len(pos.shape[:-1]), f'max_reso len(shape) must match pos len(shape), but got {len(max_reso)} != {len(pos.shape[:-1])}'
         freq_bands = torch.stack([torch.linspace(1.0, max_r / 2.0, steps=self.num_freq_bands) for max_r in max_reso])
         pos_freqs = rearrange(torch.einsum('...d,df->d...f', pos, freq_bands), 'd ... f -> ... (d f)')
 
@@ -74,7 +88,7 @@ class FourierPreprocessor(nn.Module):
 
     def forward(self, x):
         batch, *x_in_shape = x.shape
-        assert x_in_shape == self.input_shape, f'input shape {x_in_shape} != expected {self.input_shape}'
+        assert x_in_shape == self.in_shape, f'input shape {x_in_shape} != expected {self.in_shape}'
 
         pos_encoding = repeat(self.pos_encoding, '... -> b ...', b=batch)  # repeat for batch
         x = rearrange(x, 'b ... c -> b (...) c')  # flatten spatial dimensions into 1D

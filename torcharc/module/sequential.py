@@ -4,6 +4,15 @@ from typing import Any, List, Optional
 import pydash as ps
 
 
+class SpreadSequential(nn.Sequential):
+    '''Sequential with auto-spread on multiple input arguments since PyTorch Sequential can't handle it'''
+
+    def forward(self, *inputs):
+        for module in self:
+            inputs = module(*inputs) if isinstance(inputs, tuple) else module(inputs)
+        return inputs
+
+
 def build_nn_layer(nn_type: str, *args, **kwargs) -> nn.Module:
     '''Build the main layer from arc.type, e.g. linear, conv1d, conv2d, conv3d'''
     return getattr(nn, nn_type)(*args, **kwargs)

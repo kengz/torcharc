@@ -1,6 +1,7 @@
 # basic modules for Perceiver based on https://github.com/deepmind/deepmind-research/tree/master/perceiver
 from einops import rearrange
 from torch import nn
+from torcharc.module.sequential import SpreadSequential
 import torch
 
 
@@ -32,15 +33,6 @@ class Residual(nn.Module):
     def forward(self, *args, **kwargs):
         x = self.module(*args, **kwargs)
         return self.dropout(x) + args[0]
-
-
-class SpreadSequential(nn.Sequential):
-    '''Sequential with auto-spread on multiple input arguments since PyTorch Sequential can't handle it'''
-
-    def forward(self, *inputs):
-        for module in self:
-            inputs = module(*inputs) if isinstance(inputs, tuple) else module(inputs)
-        return inputs
 
 
 def attend(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:

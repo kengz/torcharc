@@ -80,7 +80,7 @@ def infer_in_shape(arc: dict, xs: Union[torch.Tensor, dict]) -> None:
         assert len(xs.shape) == 2, f'xs shape {xs.shape} is not meant for {nn_type} layer'
         in_features = xs.shape[1]
         arc.update(in_features=in_features)
-    elif nn_type.startswith('Conv') or nn_type == 'transformer':
+    elif nn_type.startswith('Conv') or nn_type == 'transformer' or nn_type == 'Perceiver':
         if isinstance(xs, dict):
             in_names = arc.get('in_names', list(xs)[:1])
             xs = xs[in_names[0]]
