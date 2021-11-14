@@ -1,7 +1,5 @@
 from torch import nn
-
-
-IdentityPostprocessor = nn.Identity
+from torcharc.module.perceiver_io.preprocessor import Identity  # noqa
 
 
 class ProjectionPostprocessor(nn.Module):
@@ -33,5 +31,4 @@ class ClassificationPostprocessor(ProjectionPostprocessor):
     def forward(self, x):
         return super().forward(x).squeeze(dim=1)  # output logits
 
-# TODO embedding postprocessor
 # TODO multimodal postprocessor by partitioning in_shape[0] to each postprocessor

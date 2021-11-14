@@ -5,8 +5,6 @@ Build PyTorch networks by specifying architectures.
 
 ```bash
 pip install torcharc
-# to use the time-series transformer model
-pip install git+https://github.com/kengz/transformer.git
 ```
 
 Bring your own PyTorch: this allows you to use the version of PyTorch as needed - GPU/CPU, nightly etc. For example:
@@ -18,7 +16,7 @@ conda install pytorch -c pytorch
 ## Usage
 
 Given just the architecture, `torcharc` can build generic DAG (directed acyclic graph) of nn modules, which consists of:
-- single-input-output modules: `Conv1d, Conv2d, Conv3d, Linear, PTTSTransformer, TSTransformer` or any other valid nn.Module
+- single-input-output modules: `Conv1d, Conv2d, Conv3d, Linear, Perceiver` or any other valid nn.Module
 - fork modules: `ReuseFork, SplitFork`
 - merge modules: `ConcatMerge, FiLMMerge`
 
@@ -115,195 +113,1337 @@ Sequential(
 </details>
 
 
-### Time-Series Transformer
+### Perceiver
 
 ```python
 arc = {
-    'type': 'TSTransformer',
-    'd_model': 64,
-    'nhead': 8,
-    'num_encoder_layers': 4,
-    'num_decoder_layers': 4,
-    'dropout': 0.2,
-    'dim_feedforward': 2048,
-    'activation': 'relu',
-    'in_embedding': 'Linear',
-    'pe': 'sinusoid',
-    'attention_size': None,
-    'in_channels': 1,
-    'out_channels': 1,
-    'q': 8,
-    'v': 8,
-    'chunk_mode': None,
+    'type': 'Perceiver',
+    'in_shape': [64, 64, 3],
+    'arc': {
+        'preprocessor': {
+            'type': 'FourierPreprocessor',
+            'num_freq_bands': 32,
+            'cat_pos': True,
+        },
+        'encoder': {
+            'type': 'PerceiverEncoder',
+            'latent_shape': [4, 11],
+            'head_dim': 32,
+            'v_head_dim': None,
+            'cross_attn_num_heads': 1,
+            'cross_attn_widening_factor': 1,
+            'num_self_attn_blocks': 8,
+            'num_self_attn_per_block': 6,
+            'self_attn_num_heads': 8,
+            'self_attn_widening_factor': 1,
+            'dropout_p': 0.0,
+        },
+        'decoder': {
+            'type': 'PerceiverDecoder',
+            'out_shape': [1, 16],
+            'head_dim': 32,
+            'v_head_dim': None,
+            'cross_attn_num_heads': 1,
+            'cross_attn_widening_factor': 1,
+            'dropout_p': 0.0,
+        },
+        'postprocessor': {
+            'type': 'ClassificationPostprocessor',
+            'out_dim': 10,
+        }
+    }
 }
 model = torcharc.build(arc)
 
 seq_len = 32
-x = torch.rand([seq_len, arc['in_channels']])
+x = torch.rand([seq_len, *arc['in_shape']])
 ```
 
 <details><summary>model</summary>
 <p>
 
 ```
-TSTransformer(
-  (in_embedding): Linear(in_features=1, out_features=64, bias=True)
-  (pe): SinusoidPE(
-    (dropout): Dropout(p=0.1, inplace=False)
+Perceiver(
+  (module): SpreadSequential(
+    (0): FourierPreprocessor()
+    (1): PerceiverEncoder(
+      (encoder_processor): SpreadSequential(
+        (0): SpreadSequential(
+          (0): Residual(
+            (module): CrossAttention(
+              (attn): Attention(
+                (to_flat_q): Linear(in_features=11, out_features=32, bias=True)
+                (to_flat_k): Linear(in_features=133, out_features=32, bias=True)
+                (to_flat_v): Linear(in_features=133, out_features=32, bias=True)
+                (to_z): Linear(in_features=32, out_features=11, bias=True)
+              )
+              (embed_layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              (context_layer_norm): LayerNorm((133,), eps=1e-05, elementwise_affine=True)
+            )
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+          (1): Residual(
+            (module): TransformerMLP(
+              (module): Sequential(
+                (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                (1): Linear(in_features=11, out_features=11, bias=True)
+                (2): GELU()
+                (3): Linear(in_features=11, out_features=11, bias=True)
+              )
+            )
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+        )
+        (1): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (2): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (3): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (4): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (5): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (6): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (7): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+        (8): Sequential(
+          (0): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (2): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (3): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (4): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (5): Sequential(
+            (0): Residual(
+              (module): SelfAttention(
+                (attn): Attention(
+                  (to_flat_q): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_k): Linear(in_features=11, out_features=256, bias=True)
+                  (to_flat_v): Linear(in_features=11, out_features=256, bias=True)
+                  (to_z): Linear(in_features=256, out_features=11, bias=True)
+                )
+                (layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+            (1): Residual(
+              (module): TransformerMLP(
+                (module): Sequential(
+                  (0): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+                  (1): Linear(in_features=11, out_features=11, bias=True)
+                  (2): GELU()
+                  (3): Linear(in_features=11, out_features=11, bias=True)
+                )
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+        )
+      )
+    )
+    (2): PerceiverDecoder(
+      (decoder): SpreadSequential(
+        (0): Residual(
+          (module): CrossAttention(
+            (attn): Attention(
+              (to_flat_q): Linear(in_features=16, out_features=32, bias=True)
+              (to_flat_k): Linear(in_features=11, out_features=32, bias=True)
+              (to_flat_v): Linear(in_features=11, out_features=32, bias=True)
+              (to_z): Linear(in_features=32, out_features=16, bias=True)
+            )
+            (embed_layer_norm): LayerNorm((16,), eps=1e-05, elementwise_affine=True)
+            (context_layer_norm): LayerNorm((11,), eps=1e-05, elementwise_affine=True)
+          )
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+        (1): Residual(
+          (module): TransformerMLP(
+            (module): Sequential(
+              (0): LayerNorm((16,), eps=1e-05, elementwise_affine=True)
+              (1): Linear(in_features=16, out_features=16, bias=True)
+              (2): GELU()
+              (3): Linear(in_features=16, out_features=16, bias=True)
+            )
+          )
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (3): ClassificationPostprocessor(
+      (linear): Linear(in_features=16, out_features=10, bias=True)
+    )
   )
-  (encoders): Sequential(
-    (0): Encoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (1): Encoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (2): Encoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (3): Encoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-  )
-  (decoders): ModuleList(
-    (0): Decoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_encoderDecoderAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm3): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (1): Decoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_encoderDecoderAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm3): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (2): Decoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_encoderDecoderAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm3): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-    (3): Decoder(
-      (_selfAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_encoderDecoderAttention): MultiHeadAttention(
-        (_W_q): Linear(in_features=64, out_features=64, bias=True)
-        (_W_k): Linear(in_features=64, out_features=64, bias=True)
-        (_W_v): Linear(in_features=64, out_features=64, bias=True)
-        (_W_o): Linear(in_features=64, out_features=64, bias=True)
-      )
-      (_feedForward): PositionwiseFeedForward(
-        (_linear1): Linear(in_features=64, out_features=2048, bias=True)
-        (_linear2): Linear(in_features=2048, out_features=64, bias=True)
-      )
-      (_layerNorm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_layerNorm3): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
-      (_dropout): Dropout(p=0.2, inplace=False)
-    )
-  )
-  (out_linear): Linear(in_features=64, out_features=1, bias=True)
 )
 ```
 

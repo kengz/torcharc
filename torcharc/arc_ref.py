@@ -48,41 +48,188 @@ REF_ARCS = {
             'std': 0.01,
         },
     },
-    'tstransformer': {
-        'type': 'TSTransformer',
-        'd_model': 64,
-        'nhead': 8,
-        'num_encoder_layers': 4,
-        'num_decoder_layers': 4,
-        'dropout': 0.2,
-        'dim_feedforward': 2048,
-        'activation': 'relu',
-        'in_embedding': 'Linear',
-        'pe': 'sinusoid',
-        'attention_size': None,
-        'in_channels': 1,
-        'out_channels': 1,
-        'q': 8,
-        'v': 8,
-        'chunk_mode': None,
+    'perceiver_im_classifer': {
+        'type': 'Perceiver',
+        'in_shape': [224, 224, 3],
+        'arc': {
+            'preprocessor': {
+                'type': 'FourierPreprocessor',
+                'num_freq_bands': 64,
+                'max_reso': [224, 224],
+                'cat_pos': True,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [2048, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [1, 1024],
+                'head_dim': 1024,  # usually preserves out_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 10,
+            }
+        }
     },
-    'pytorch_tstransformer': {
-        'type': 'PTTSTransformer',
-        'd_model': 64,
-        'nhead': 8,
-        'num_encoder_layers': 4,
-        'num_decoder_layers': 4,
-        'dropout': 0.2,
-        'dim_feedforward': 2048,
-        'activation': 'relu',
-        'in_embedding': 'Linear',
-        'pe': 'sinusoid',
-        'attention_size': None,
-        'in_channels': 1,
-        'out_channels': 1,
-        'q': 8,
-        'v': 8,
-        'chunk_mode': None,
+    'perceiver_im2text': {
+        'type': 'Perceiver',
+        'in_shape': [224, 224, 3],
+        'arc': {
+            'preprocessor': {
+                'type': 'FourierPreprocessor',
+                'num_freq_bands': 64,
+                'max_reso': [224, 224],
+                'cat_pos': True,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [2048, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [2048, 256],  # [max_seq_len, E]
+                'head_dim': 256,  # usually preserves out_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 1024,  # vocab_size, out_shape will be [decoder.out_shape[0]=max_seq_len, vocab_size]
+            }
+        }
+    },
+    'perceiver_text2text': {
+        'type': 'Perceiver',
+        'in_shape': [2048],  # max_seq_len
+        'arc': {
+            'preprocessor': {
+                'type': 'TextPreprocessor',
+                'vocab_size': 1024,
+                'embed_dim': 256,
+                'max_seq_len': 2048,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [256, 160],
+                'head_dim': 32,
+                'v_head_dim': 160,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 1,
+                'num_self_attn_per_block': 26,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 1024,  # vocab_size, out_shape will be [decoder.out_shape[0]=max_seq_len, vocab_size]
+            }
+        }
+    },
+    'perceiver_ts2ts': {  # time series to time series
+        'type': 'Perceiver',
+        'in_shape': [2048],  # max_seq_len
+        'arc': {
+            'preprocessor': {
+                'type': 'Identity',  # nothing to preprocess
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [256, 160],
+                'head_dim': 32,
+                'v_head_dim': 160,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 1,
+                'num_self_attn_per_block': 26,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'Identity',
+            }
+        }
+    },
+    'perceiver_ts2class_ts': {  # time series to time series of classes
+        'type': 'Perceiver',
+        'in_shape': [2048],  # max_seq_len
+        'arc': {
+            'preprocessor': {
+                'type': 'Identity',  # nothing to preprocess
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [256, 160],
+                'head_dim': 32,
+                'v_head_dim': 160,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 1,
+                'num_self_attn_per_block': 26,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 2,  # vocab_size, out_shape will be [decoder.out_shape[0]=max_seq_len, vocab_size]
+            }
+        }
     },
     # DAGs
     'forward': {

@@ -4,7 +4,10 @@ import math
 import torch
 
 
-IdentityPreprocessor = nn.Identity
+class Identity(nn.Identity):
+    def __init__(self, in_shape: list):
+        super().__init__()
+        self.out_shape = in_shape
 
 
 class TextPreprocessor(nn.Module):
