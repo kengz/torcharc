@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup
+from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
 test_args = [
@@ -32,18 +32,14 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='1.0.0',
+    version='1.1.0',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',
     url='https://github.com/kengz/torcharc',
     author='kengz',
     author_email='kengzwl@gmail.com',
-    packages=[
-        'torcharc',
-        'torcharc.module',
-        'torcharc.module.transformer',
-    ],
+    packages=find_packages(),
     install_requires=[
         'numpy>=1.16.1',
         'pydash==4.7.6',

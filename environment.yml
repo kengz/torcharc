@@ -13,4 +13,3 @@ dependencies:
   - pip:
       - einops==0.3.2
       - pydash==4.7.6
-      - git+https://github.com/kengz/transformer.git

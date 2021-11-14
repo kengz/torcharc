@@ -1559,8 +1559,6 @@ bin/setup
 conda activate torcharc
 # install PyTorch
 conda install pytorch -c pytorch
-# to use the time-series transformer model
-pip install git+https://github.com/kengz/transformer.git
 ```
 
 ### Unit Tests
