@@ -2,7 +2,7 @@
 from torch import nn
 from torcharc import optim
 from torcharc.module import fork, merge, sequential
-from torcharc.module.transformer import pytorch_tst, tst
+from torcharc.module.perceiver_io import perceiver
 from typing import Callable, List, Optional, Union
 import inspect
 import pydash as ps
@@ -14,8 +14,7 @@ setattr(torch.nn, 'ReuseFork', fork.ReuseFork)
 setattr(torch.nn, 'SplitFork', fork.SplitFork)
 setattr(torch.nn, 'ConcatMerge', merge.ConcatMerge)
 setattr(torch.nn, 'FiLMMerge', merge.FiLMMerge)
-setattr(torch.nn, 'PTTSTransformer', pytorch_tst.PTTSTransformer)
-setattr(torch.nn, 'TSTransformer', tst.TSTransformer)
+setattr(torch.nn, 'Perceiver', perceiver.Perceiver)
 
 setattr(torch.optim, 'GlobalAdam', optim.GlobalAdam)
 setattr(torch.optim, 'GlobalRMSprop', optim.GlobalRMSprop)
@@ -80,7 +79,7 @@ def infer_in_shape(arc: dict, xs: Union[torch.Tensor, dict]) -> None:
         assert len(xs.shape) == 2, f'xs shape {xs.shape} is not meant for {nn_type} layer'
         in_features = xs.shape[1]
         arc.update(in_features=in_features)
-    elif nn_type.startswith('Conv') or nn_type == 'transformer':
+    elif nn_type.startswith('Conv') or nn_type == 'Perceiver':
         if isinstance(xs, dict):
             in_names = arc.get('in_names', list(xs)[:1])
             xs = xs[in_names[0]]

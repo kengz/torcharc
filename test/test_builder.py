@@ -1,9 +1,10 @@
-from torcharc import arc_ref, build
 from torch import nn
+from torcharc import arc_ref, build
+import pytest
 
 
-def test_builder():
-    for name, arc in arc_ref.REF_ARCS.items():
-        print('building', name)
-        model = build(arc)
-        assert isinstance(model, nn.Module)
+@pytest.mark.parametrize('name,arc', list(arc_ref.REF_ARCS.items()))
+def test_builder(name, arc):
+    print('building', name)
+    model = build(arc)
+    assert isinstance(model, nn.Module)
