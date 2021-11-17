@@ -4,6 +4,14 @@ import math
 import torch
 
 
+def build_learned_pos_encoding(max_seq_len: int, embed_dim: int):
+    '''Build learned positional encoding with Deepmind's init'''
+    # learned position encoding
+    pos_encoding = nn.Parameter(torch.empty(max_seq_len, embed_dim))
+    nn.init.trunc_normal_(pos_encoding, mean=0.0, std=0.02)  # Deepmind's init
+    return pos_encoding
+
+
 class Identity(nn.Identity):
     def __init__(self, in_shape: list):
         super().__init__()
@@ -17,8 +25,7 @@ class TextPreprocessor(nn.Module):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         # learned position encoding
-        self.pos_encoding = nn.Parameter(torch.empty(max_seq_len, embed_dim))
-        nn.init.trunc_normal_(self.pos_encoding, mean=0.0, std=0.02)  # Deepmind's init
+        self.pos_encoding = build_learned_pos_encoding(max_seq_len, embed_dim)
         self.scale = embed_dim ** 0.5
         self.out_shape = [max_seq_len, embed_dim]
 
