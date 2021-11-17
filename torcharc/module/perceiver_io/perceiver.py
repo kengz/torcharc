@@ -3,16 +3,7 @@
 from torch import nn
 from torcharc.module.perceiver_io import encoder, decoder, postprocessor, preprocessor
 from torcharc.module.perceiver_io.attention import SpreadSequential
-import pydash as ps
-
-
-def build_component(arc: dict, infer_arc: dict, name: str,  module):
-    '''Helper to build component of Perceiver'''
-    sub_arc = arc[name]
-    kwargs = ps.omit(sub_arc, 'type')
-    kwargs.update(infer_arc)
-    sub_module = getattr(module, sub_arc['type'])(**kwargs)
-    return sub_module
+from torcharc.net_util import build_component
 
 
 class Perceiver(nn.Module):

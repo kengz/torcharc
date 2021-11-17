@@ -1,6 +1,16 @@
 from torch import nn
 from typing import Dict, List, Union
+import pydash as ps
 import torch
+
+
+def build_component(arc: dict, infer_arc: dict, name: str, module):
+    '''Helper to build component of module.{name} by combining arc with infer_arc'''
+    sub_arc = arc[name]
+    kwargs = ps.omit(sub_arc, 'type')
+    kwargs.update(infer_arc)
+    sub_module = getattr(module, sub_arc['type'])(**kwargs)
+    return sub_module
 
 
 def calc_out_shape(module: nn.Module, in_shape: List[int]) -> List[int]:
