@@ -111,12 +111,10 @@ class FourierPreprocessor(nn.Module):
 class MultimodalPreprocessor(nn.Module):
     '''
     Multimodal preprocessor for multimodal input {mode: x}
-    This recursively builds a preprocessor for each mode, and applies them to the multimodal input in order.
+    This recursively builds a preprocessor for each mode, and applies them to the multimodal inputs in order.
     To combine the multimodal preprocessed outputs,
     first note that each output is a 2D array of (max_seq_len, channel) or (M, C) of Perceiver input array.
-    They are padded to the common_channels (max_channels + pad_channels),
-    where the channel paddings contain a single repeated pos_encoding for each mode for transformer to attend to.
-    Then, having the same channels, they concatenated along sequences so transformer can attend to each mode as a position.
+    They are padded with trainable position encoding (1 position per mode, broadcasted) to have the same common_channels (max_channels + pad_channels), before getting concatenated along the sequences for transformer to attend to.
     The output shape is [total_seq_len, common_channels]
     '''
 
