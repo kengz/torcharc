@@ -231,6 +231,56 @@ REF_ARCS = {
             }
         }
     },
+    'perceiver_multimodal2classifier': {
+        'type': 'Perceiver',
+        'in_shape': {'image': [224, 224, 3], 'vector': [31, 2]},
+        'arc': {
+            'preprocessor': {
+                'type': 'MultimodalPreprocessor',
+                'arc': {
+                    'image': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 64,
+                        'max_reso': [224, 224],
+                        'cat_pos': True,
+                    },
+                    'vector': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 16,
+                        'max_reso': [31],
+                        'cat_pos': True,
+                    },
+                },
+                'pad_channels': 2,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [2048, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [1, 1024],
+                'head_dim': 1024,  # usually preserves out_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 10,
+            }
+        }
+    },
     # DAGs
     'forward': {
         'dag_in_shape': [8],

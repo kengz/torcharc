@@ -50,7 +50,7 @@ def test_text_preprocessor(batch, in_shape, num_freq_bands):
         'vector': {
             'type': 'FourierPreprocessor',
             'num_freq_bands': 16,
-            'max_reso': [32],
+            'max_reso': [31],
             'cat_pos': True,
         },
     }

@@ -85,7 +85,7 @@ class FourierPreprocessor(nn.Module):
         @return position encodings tensor of shape (x, y,... d*(2*num_freq_bands+1))
         '''
         max_reso = max_reso or pos.shape[:-1]
-        assert len(max_reso) == len(pos.shape[:-1]), f'max_reso len(shape) must match pos len(shape), but got {len(max_reso)} != {len(pos.shape[:-1])}'
+        assert len(max_reso) == len(pos.shape[:-1]), f'max_reso len(shape) must match pos len(shape), but got {len(max_reso)} instead of {len(pos.shape[:-1])}'
         freq_bands = torch.stack([torch.linspace(1.0, max_r / 2.0, steps=self.num_freq_bands) for max_r in max_reso])
         pos_freqs = rearrange(torch.einsum('...d,df->d...f', pos, freq_bands), 'd ... f -> ... (d f)')
 
