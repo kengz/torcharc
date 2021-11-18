@@ -1,3 +1,4 @@
+from torcharc import net_util
 from torcharc.module.perceiver_io import preprocessor
 import math
 import pytest
@@ -31,4 +32,33 @@ def test_text_preprocessor(batch, in_shape, num_freq_bands):
     module = preprocessor.FourierPreprocessor(in_shape, num_freq_bands, max_reso)
     out = module(x)
     assert [math.prod(in_shape[:-1]), module.out_dim] == module.out_shape
+    assert list(out.shape) == [batch, *module.out_shape]
+
+
+@pytest.mark.parametrize('batch', [2])
+@pytest.mark.parametrize('in_shape', [
+    {'image': [64, 64, 3], 'vector': [31, 2]},
+])
+@pytest.mark.parametrize('arc', [
+    {
+        'image': {
+            'type': 'FourierPreprocessor',
+            'num_freq_bands': 64,
+            'max_reso': [64, 64],
+            'cat_pos': True,
+        },
+        'vector': {
+            'type': 'FourierPreprocessor',
+            'num_freq_bands': 16,
+            'max_reso': [32],
+            'cat_pos': True,
+        },
+    }
+])
+@pytest.mark.parametrize('pad_channels', [2])
+def test_multimodal_preprocessor(batch, in_shape, arc, pad_channels):
+    xs = net_util.get_rand_tensor(in_shape, batch)
+    module = preprocessor.MultimodalPreprocessor(in_shape, arc, pad_channels)
+    out = module(xs)
+    assert [4127, 263] == module.out_shape
     assert list(out.shape) == [batch, *module.out_shape]
