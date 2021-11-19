@@ -60,7 +60,7 @@ REF_ARCS = {
             },
             'encoder': {
                 'type': 'PerceiverEncoder',
-                'latent_shape': [2048, 1024],
+                'latent_shape': [512, 1024],
                 'head_dim': 1024,  # usually preserves latent_shape[-1]
                 'v_head_dim': None,  # defaults to head_dim
                 'cross_attn_num_heads': 1,
@@ -98,7 +98,7 @@ REF_ARCS = {
             },
             'encoder': {
                 'type': 'PerceiverEncoder',
-                'latent_shape': [2048, 1024],
+                'latent_shape': [512, 1024],
                 'head_dim': 1024,  # usually preserves latent_shape[-1]
                 'v_head_dim': None,  # defaults to head_dim
                 'cross_attn_num_heads': 1,
@@ -111,7 +111,7 @@ REF_ARCS = {
             },
             'decoder': {
                 'type': 'PerceiverDecoder',
-                'out_shape': [2048, 256],  # [max_seq_len, E]
+                'out_shape': [512, 256],  # [max_seq_len, E]
                 'head_dim': 256,  # usually preserves out_shape[-1]
                 'v_head_dim': None,  # defaults to head_dim
                 'cross_attn_num_heads': 1,
@@ -126,13 +126,13 @@ REF_ARCS = {
     },
     'perceiver_text2text': {
         'type': 'Perceiver',
-        'in_shape': [2048],  # max_seq_len
+        'in_shape': [512],  # max_seq_len
         'arc': {
             'preprocessor': {
                 'type': 'TextPreprocessor',
                 'vocab_size': 1024,
                 'embed_dim': 256,
-                'max_seq_len': 2048,
+                'max_seq_len': 512,
             },
             'encoder': {
                 'type': 'PerceiverEncoder',
@@ -149,7 +149,7 @@ REF_ARCS = {
             },
             'decoder': {
                 'type': 'PerceiverDecoder',
-                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'out_shape': [512, 160],  # [max_seq_len, E]
                 'head_dim': 32,
                 'v_head_dim': 96,
                 'cross_attn_num_heads': 8,
@@ -164,7 +164,7 @@ REF_ARCS = {
     },
     'perceiver_ts2ts': {  # time series to time series
         'type': 'Perceiver',
-        'in_shape': [2048],  # max_seq_len
+        'in_shape': [512],  # max_seq_len
         'arc': {
             'preprocessor': {
                 'type': 'Identity',  # nothing to preprocess
@@ -184,7 +184,7 @@ REF_ARCS = {
             },
             'decoder': {
                 'type': 'PerceiverDecoder',
-                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'out_shape': [512, 160],  # [max_seq_len, E]
                 'head_dim': 32,
                 'v_head_dim': 96,
                 'cross_attn_num_heads': 8,
@@ -192,13 +192,14 @@ REF_ARCS = {
                 'dropout_p': 0.0,
             },
             'postprocessor': {
-                'type': 'Identity',
+                'type': 'ProjectionPostprocessor',
+                'out_dim': 1,
             }
         }
     },
-    'perceiver_ts2class_ts': {  # time series to time series of classes
+    'perceiver_ts2classifier_ts': {  # time series to time series of classes
         'type': 'Perceiver',
-        'in_shape': [2048],  # max_seq_len
+        'in_shape': [512],  # max_seq_len
         'arc': {
             'preprocessor': {
                 'type': 'Identity',  # nothing to preprocess
@@ -218,7 +219,7 @@ REF_ARCS = {
             },
             'decoder': {
                 'type': 'PerceiverDecoder',
-                'out_shape': [2048, 160],  # [max_seq_len, E]
+                'out_shape': [512, 160],  # [max_seq_len, E]
                 'head_dim': 32,
                 'v_head_dim': 96,
                 'cross_attn_num_heads': 8,
@@ -228,6 +229,169 @@ REF_ARCS = {
             'postprocessor': {
                 'type': 'ClassificationPostprocessor',
                 'out_dim': 2,  # vocab_size, out_shape will be [decoder.out_shape[0]=max_seq_len, vocab_size]
+            }
+        }
+    },
+    'perceiver_multimodal2classifier': {
+        'type': 'Perceiver',
+        'in_shapes': {'image': [224, 224, 3], 'vector': [31, 2]},
+        'arc': {
+            'preprocessor': {
+                'type': 'MultimodalPreprocessor',
+                'arc': {
+                    'image': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 64,
+                        'max_reso': [224, 224],
+                        'cat_pos': True,
+                    },
+                    'vector': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 16,
+                        'max_reso': [31],
+                        'cat_pos': True,
+                    },
+                },
+                'pad_channels': 2,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [512, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [1, 1024],
+                'head_dim': 1024,  # usually preserves out_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'ClassificationPostprocessor',
+                'out_dim': 10,
+            }
+        }
+    },
+    'perceiver_ts2multimodal': {
+        'type': 'Perceiver',
+        'in_shape': [512],  # max_seq_len
+        'arc': {
+            'preprocessor': {
+                'type': 'Identity',  # nothing to preprocess
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [256, 160],
+                'head_dim': 32,
+                'v_head_dim': 160,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 1,
+                'num_self_attn_per_block': 26,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [641, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'MultimodalPostprocessor',
+                'in_shapes': {'classifier': [1, 160], 'ts_1': [512, 160], 'ts_2': [128, 160]},
+                'arc': {
+                    'classifier': {
+                        'type': 'ClassificationPostprocessor',
+                        'out_dim': 10,
+                    },
+                    'ts_1': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                    'ts_2': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                },
+            }
+        }
+    },
+    'perceiver_multimodal2multimodal': {
+        'type': 'Perceiver',
+        'in_shapes': {'image': [224, 224, 3], 'vector': [31, 2]},
+        'arc': {
+            'preprocessor': {
+                'type': 'MultimodalPreprocessor',
+                'arc': {
+                    'image': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 64,
+                        'max_reso': [224, 224],
+                        'cat_pos': True,
+                    },
+                    'vector': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 16,
+                        'max_reso': [31],
+                        'cat_pos': True,
+                    },
+                },
+                'pad_channels': 2,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [512, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [641, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'MultimodalPostprocessor',
+                'in_shapes': {'classifier': [1, 160], 'ts_1': [512, 160], 'ts_2': [128, 160]},
+                'arc': {
+                    'classifier': {
+                        'type': 'ClassificationPostprocessor',
+                        'out_dim': 10,
+                    },
+                    'ts_1': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                    'ts_2': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                },
             }
         }
     },
