@@ -234,7 +234,7 @@ REF_ARCS = {
     },
     'perceiver_multimodal2classifier': {
         'type': 'Perceiver',
-        'in_shape': {'image': [224, 224, 3], 'vector': [31, 2]},
+        'in_shapes': {'image': [224, 224, 3], 'vector': [31, 2]},
         'arc': {
             'preprocessor': {
                 'type': 'MultimodalPreprocessor',
@@ -279,6 +279,119 @@ REF_ARCS = {
             'postprocessor': {
                 'type': 'ClassificationPostprocessor',
                 'out_dim': 10,
+            }
+        }
+    },
+    'perceiver_ts2multimodal': {
+        'type': 'Perceiver',
+        'in_shape': [512],  # max_seq_len
+        'arc': {
+            'preprocessor': {
+                'type': 'Identity',  # nothing to preprocess
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [256, 160],
+                'head_dim': 32,
+                'v_head_dim': 160,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 1,
+                'num_self_attn_per_block': 26,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [641, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'MultimodalPostprocessor',
+                'in_shapes': {'classifier': [1, 160], 'ts_1': [512, 160], 'ts_2': [128, 160]},
+                'arc': {
+                    'classifier': {
+                        'type': 'ClassificationPostprocessor',
+                        'out_dim': 10,
+                    },
+                    'ts_1': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                    'ts_2': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                },
+            }
+        }
+    },
+    'perceiver_multimodal2multimodal': {
+        'type': 'Perceiver',
+        'in_shapes': {'image': [224, 224, 3], 'vector': [31, 2]},
+        'arc': {
+            'preprocessor': {
+                'type': 'MultimodalPreprocessor',
+                'arc': {
+                    'image': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 64,
+                        'max_reso': [224, 224],
+                        'cat_pos': True,
+                    },
+                    'vector': {
+                        'type': 'FourierPreprocessor',
+                        'num_freq_bands': 16,
+                        'max_reso': [31],
+                        'cat_pos': True,
+                    },
+                },
+                'pad_channels': 2,
+            },
+            'encoder': {
+                'type': 'PerceiverEncoder',
+                'latent_shape': [512, 1024],
+                'head_dim': 1024,  # usually preserves latent_shape[-1]
+                'v_head_dim': None,  # defaults to head_dim
+                'cross_attn_num_heads': 1,
+                'cross_attn_widening_factor': 1,
+                'num_self_attn_blocks': 8,
+                'num_self_attn_per_block': 6,
+                'self_attn_num_heads': 8,
+                'self_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'decoder': {
+                'type': 'PerceiverDecoder',
+                'out_shape': [641, 160],  # [max_seq_len, E]
+                'head_dim': 32,
+                'v_head_dim': 96,
+                'cross_attn_num_heads': 8,
+                'cross_attn_widening_factor': 1,
+                'dropout_p': 0.0,
+            },
+            'postprocessor': {
+                'type': 'MultimodalPostprocessor',
+                'in_shapes': {'classifier': [1, 160], 'ts_1': [512, 160], 'ts_2': [128, 160]},
+                'arc': {
+                    'classifier': {
+                        'type': 'ClassificationPostprocessor',
+                        'out_dim': 10,
+                    },
+                    'ts_1': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                    'ts_2': {
+                        'type': 'ProjectionPostprocessor',
+                        'out_dim': 4,
+                    },
+                },
             }
         }
     },

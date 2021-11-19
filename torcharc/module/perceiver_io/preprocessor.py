@@ -119,12 +119,11 @@ class MultimodalPreprocessor(nn.Module):
     The output shape is [total_seq_len, common_channels]
     '''
 
-    def __init__(self, in_shape: dict, arc: dict, pad_channels: int = 2):
+    def __init__(self, in_shapes: dict, arc: dict, pad_channels: int = 2):
         super().__init__()
-        # semantics overload: using in_shape here as passed in from Perceiver
         self.preprocessors = nn.ModuleDict({
-            mode: net_util.build_component(arc, {'in_shape': mode_in_shape}, mode, sys.modules[__name__])
-            for mode, mode_in_shape in in_shape.items()
+            mode: net_util.build_component(arc, {'in_shape': in_shape}, mode, sys.modules[__name__])
+            for mode, in_shape in in_shapes.items()
         })
         self.out_shapes = {mode: preprocessor.out_shape for mode, preprocessor in self.preprocessors.items()}
         total_seq_len = ps.sum_by(self.out_shapes, ps.head)

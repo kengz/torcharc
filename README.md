@@ -115,6 +115,8 @@ Sequential(
 
 ### Perceiver
 
+>See [`torcharc/arc_ref.py`](https://github.com/kengz/torcharc/blob/master/torcharc/arc_ref.py) for multimodal Perceiver.
+
 ```python
 arc = {
     'type': 'Perceiver',

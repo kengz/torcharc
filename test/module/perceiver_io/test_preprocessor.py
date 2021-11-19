@@ -36,7 +36,7 @@ def test_text_preprocessor(batch, in_shape, num_freq_bands):
 
 
 @pytest.mark.parametrize('batch', [2])
-@pytest.mark.parametrize('in_shape', [
+@pytest.mark.parametrize('in_shapes', [
     {'image': [64, 64, 3], 'vector': [31, 2]},
 ])
 @pytest.mark.parametrize('arc', [
@@ -56,9 +56,9 @@ def test_text_preprocessor(batch, in_shape, num_freq_bands):
     }
 ])
 @pytest.mark.parametrize('pad_channels', [2])
-def test_multimodal_preprocessor(batch, in_shape, arc, pad_channels):
-    xs = net_util.get_rand_tensor(in_shape, batch)
-    module = preprocessor.MultimodalPreprocessor(in_shape, arc, pad_channels)
+def test_multimodal_preprocessor(batch, in_shapes, arc, pad_channels):
+    xs = net_util.get_rand_tensor(in_shapes, batch)
+    module = preprocessor.MultimodalPreprocessor(in_shapes, arc, pad_channels)
     out = module(xs)
     assert [4127, 263] == module.out_shape
     assert list(out.shape) == [batch, *module.out_shape]

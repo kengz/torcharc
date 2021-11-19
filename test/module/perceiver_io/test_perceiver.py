@@ -1,4 +1,5 @@
 from torcharc.module.perceiver_io import perceiver
+import pydash as ps
 import pytest
 import torch
 
@@ -44,7 +45,8 @@ def test_perceiver(batch):
     }
     in_shape = arc['in_shape']
     x = torch.rand(batch, *in_shape)
-    module = perceiver.Perceiver(**arc)
+    kwargs = ps.omit(arc, 'type', 'in_names', 'init')
+    module = perceiver.Perceiver(**kwargs)
     out = module(x)
     assert list(out.shape) == [batch, *module._postprocessor.out_shape]
     assert not out.isnan().any()
