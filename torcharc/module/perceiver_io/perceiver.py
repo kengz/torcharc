@@ -4,6 +4,7 @@ from torch import nn
 from torcharc.module.perceiver_io import encoder, decoder, postprocessor, preprocessor
 from torcharc.module.perceiver_io.attention import SpreadSequential
 from torcharc.net_util import build_component
+from typing import Union
 
 
 class Perceiver(nn.Module):
@@ -12,7 +13,7 @@ class Perceiver(nn.Module):
     See the encoder and decoder modules for more implementation details
     '''
 
-    def __init__(self, in_shape: list, arc: dict, **_kwargs):
+    def __init__(self, in_shape: Union[list, dict], arc: dict, **_kwargs):
         super().__init__()
         self._preprocessor = build_component(arc, {'in_shape': in_shape}, 'preprocessor', preprocessor)
         self._encoder = build_component(arc, {'in_dim': self._preprocessor.out_shape[-1]}, 'encoder', encoder)

@@ -197,7 +197,7 @@ REF_ARCS = {
             }
         }
     },
-    'perceiver_ts2class_ts': {  # time series to time series of classes
+    'perceiver_ts2classifier_ts': {  # time series to time series of classes
         'type': 'Perceiver',
         'in_shape': [512],  # max_seq_len
         'arc': {

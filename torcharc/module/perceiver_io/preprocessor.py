@@ -18,6 +18,7 @@ def build_learned_pos_encoding(max_seq_len: int, embed_dim: int):
 class Identity(nn.Identity):
     def __init__(self, in_shape: list):
         super().__init__()
+        self.in_shape = in_shape
         self.out_shape = in_shape
 
 
@@ -32,7 +33,7 @@ class TextPreprocessor(nn.Module):
         self.scale = embed_dim ** 0.5
         self.out_shape = [max_seq_len, embed_dim]
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch, seq_len = x.shape
         pe = repeat(self.pos_encoding[:seq_len], '... -> b ...', b=batch)  # repeat for batch
         return self.embedding(x) * self.scale + pe
@@ -99,7 +100,7 @@ class FourierPreprocessor(nn.Module):
     def get_pos_encoding_dim(self) -> int:
         return len(self.spatial_shape) * (2 * self.num_freq_bands + int(self.cat_pos))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch, *x_in_shape = x.shape
         assert x_in_shape == self.in_shape, f'input shape {x_in_shape} != expected {self.in_shape}'
 
@@ -120,17 +121,18 @@ class MultimodalPreprocessor(nn.Module):
 
     def __init__(self, in_shape: dict, arc: dict, pad_channels: int = 2):
         super().__init__()
-        self.mode_preprocessor = nn.ModuleDict({
-            mode: net_util.build_component(arc, {'in_shape': sub_in_shape}, mode, sys.modules[__name__])
-            for mode, sub_in_shape in in_shape.items()
+        # semantics overload: using in_shape here as passed in from Perceiver
+        self.preprocessors = nn.ModuleDict({
+            mode: net_util.build_component(arc, {'in_shape': mode_in_shape}, mode, sys.modules[__name__])
+            for mode, mode_in_shape in in_shape.items()
         })
-        self.mode_out_shape = {mode: preprocessor.out_shape for mode, preprocessor in self.mode_preprocessor.items()}
-        total_seq_len = ps.sum_by(self.mode_out_shape, ps.head)
-        max_channels = ps.max_by(self.mode_out_shape, ps.last)[-1]
+        self.out_shapes = {mode: preprocessor.out_shape for mode, preprocessor in self.preprocessors.items()}
+        total_seq_len = ps.sum_by(self.out_shapes, ps.head)
+        max_channels = ps.max_by(self.out_shapes, ps.last)[-1]
         common_channels = max_channels + pad_channels
-        self.mode_pos_encoding = {
+        self.pos_encodings = {
             mode: build_learned_pos_encoding(1, common_channels - out_shape[-1])
-            for mode, out_shape in self.mode_out_shape.items()
+            for mode, out_shape in self.out_shapes.items()
         }
         self.out_shape = [total_seq_len, common_channels]
 
@@ -140,7 +142,7 @@ class MultimodalPreprocessor(nn.Module):
         The padding channels ensured by pad_channels are used to stack learned pos_encoding of shape [1, common_channels - out_dim] (broadcasted) for each mode,
         i.e. each mode has 1 encoded position for transformer to differentiate
         '''
-        pos_encoding = self.mode_pos_encoding[mode]
+        pos_encoding = self.pos_encodings[mode]
         batch, seq_len, _channel = out.shape
         padding = pos_encoding.broadcast_to((batch, seq_len, pos_encoding.shape[-1]))
         return torch.cat([out, padding], dim=2)  # concat along channel to result in common_channels
@@ -148,7 +150,7 @@ class MultimodalPreprocessor(nn.Module):
     def forward(self, xs: dict) -> torch.Tensor:
         outs = []
         for mode, x in xs.items():
-            out = self.mode_preprocessor[mode](x)
+            out = self.preprocessors[mode](x)
             padded_out = self.pos_encoding_pad(mode, out)
             outs.append(padded_out)
         # NOTE concat along seq_len to result in [total_seq_len, common_channels] since transformer attention is along seq_len, not channel
