@@ -95,7 +95,7 @@ class FourierPreprocessor(nn.Module):
         spatial_encoding = torch.cat(encodings, dim=-1)  # shape (x, y,... d*(2*num_freq_bands+1))
         # flatten spatial dimensions into 1D
         pos_encoding = rearrange(spatial_encoding, '... c -> (...) c')
-        return pos_encoding
+        return nn.Parameter(pos_encoding)
 
     def get_pos_encoding_dim(self) -> int:
         return len(self.spatial_shape) * (2 * self.num_freq_bands + int(self.cat_pos))
