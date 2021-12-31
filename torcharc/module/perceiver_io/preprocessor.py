@@ -129,10 +129,10 @@ class MultimodalPreprocessor(nn.Module):
         total_seq_len = ps.sum_by(self.out_shapes, ps.head)
         max_channels = ps.max_by(self.out_shapes, ps.last)[-1]
         common_channels = max_channels + pad_channels
-        self.pos_encodings = {
+        self.pos_encodings = nn.ParameterDict({
             mode: build_learned_pos_encoding(1, common_channels - out_shape[-1])
             for mode, out_shape in self.out_shapes.items()
-        }
+        })
         self.out_shape = [total_seq_len, common_channels]
 
     def pos_encoding_pad(self, mode: str, out: torch.Tensor) -> torch.Tensor:
