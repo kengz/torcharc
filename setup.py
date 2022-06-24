@@ -32,7 +32,7 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='1.1.3',
+    version='1.2.0',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',

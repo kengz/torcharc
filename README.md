@@ -1,4 +1,5 @@
 # TorchArc ![CI](https://github.com/kengz/torcharc/workflows/CI/badge.svg)
+
 Build PyTorch networks by specifying architectures.
 
 ## Installation
@@ -16,15 +17,14 @@ conda install pytorch -c pytorch
 ## Usage
 
 Given just the architecture, `torcharc` can build generic DAG (directed acyclic graph) of nn modules, which consists of:
+
 - single-input-output modules: `Conv1d, Conv2d, Conv3d, Linear, Perceiver` or any other valid nn.Module
 - fork modules: `ReuseFork, SplitFork`
 - merge modules: `ConcatMerge, FiLMMerge`
 
 The custom modules are defined in [`torcharc/module`](https://github.com/kengz/torcharc/tree/master/torcharc/module), registered in [`torcharc/module_builder.py`](https://github.com/kengz/torcharc/blob/master/torcharc/module_builder.py).
 
-
 The full examples of architecture references are in [`torcharc/arc_ref.py`](https://github.com/kengz/torcharc/blob/master/torcharc/arc_ref.py), and full functional examples are in [`test/module/`](https://github.com/kengz/torcharc/tree/master/test/module). Below we walk through some main examples.
-
 
 ### ConvNet
 
@@ -70,7 +70,6 @@ Sequential(
 </p>
 </details>
 
-
 ### MLP
 
 ```python
@@ -112,10 +111,9 @@ Sequential(
 </p>
 </details>
 
-
 ### Perceiver
 
->See [`torcharc/arc_ref.py`](https://github.com/kengz/torcharc/blob/master/torcharc/arc_ref.py) for multimodal Perceiver.
+> See [`torcharc/arc_ref.py`](https://github.com/kengz/torcharc/blob/master/torcharc/arc_ref.py) for multimodal Perceiver.
 
 ```python
 arc = {
@@ -1452,7 +1450,6 @@ Perceiver(
 </p>
 </details>
 
-
 ### DAG: Hydra
 
 Ultimately, we can build a generic DAG network using the modules linked by the fork and merge modules. The example below shows HydraNet - a network with multiple inputs and multiple outputs.
@@ -1549,6 +1546,74 @@ DAGNet(
 DAG module accepts a `dict` (example below) as input, and the module selects its input by matching its own name in the arc and the `in_name`, then carry forward the output together with any unconsumed inputs.
 
 For example, the input `xs` with keys `image, vector` passes through the first `image` module, and the output becomes `{'image': image_module(xs.image), 'vector': xs.vector}`. This is then passed through the remainder of the modules in the arc as declared.
+
+### Criterion (Loss)
+
+TorchArc provides convenience method to construct criterion modules (loss function) in the same config-driven manner.
+
+```python
+import torch
+import torcharc
+
+
+loss_spec = {
+    'type': 'BCEWithLogitsLoss',
+    'reduction': 'mean',
+    'pos_weight': 10.0,
+}
+criterion = torcharc.build_criterion(loss_spec)
+
+pred = torch.randn(3, requires_grad=True)
+target = torch.empty(3).random_(2)
+loss = criterion(pred, target)
+# tensor(11.6296, grad_fn=<BinaryCrossEntropyWithLogitsBackward>)
+```
+
+### Optimizer
+
+TorchArc also provides convenience method to construct optimizer in the same config-driven manner.
+
+```python
+import torcharc
+
+
+arc = {
+    'type': 'Linear',
+    'in_features': 8,
+    'layers': [64, 32],
+    'batch_norm': True,
+    'activation': 'ReLU',
+    'dropout': 0.2,
+    'init': {
+      'type': 'normal_',
+      'std': 0.01,
+    },
+}
+optim_spec = {
+    'type': 'Adam',
+    'lr': 0.001,
+}
+
+model = torcharc.build(arc)
+optimizer = torcharc.build_optimizer(optim_spec, model)
+```
+
+<details><summary>optimizer</summary>
+<p>
+
+```
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 0
+)
+```
+
+</p>
+</details>
 
 ## Development
 
