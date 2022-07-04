@@ -49,7 +49,7 @@ jobs:
 
       - name: Install repo
         run: |
-          pip install torch -y
+          pip install torch
           pip install -e .
 
       - uses: liskin/gh-problem-matcher-wrap@v1
