@@ -4,7 +4,6 @@ from torch import nn
 from torcharc.module.perceiver_io import encoder, decoder, postprocessor, preprocessor
 from torcharc.module.perceiver_io.attention import SpreadSequential
 from torcharc.net_util import build_component
-from typing import Union
 import pydash as ps
 
 

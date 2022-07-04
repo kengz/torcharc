@@ -25,7 +25,7 @@ echo "--- Installing Conda environment ---"
 if conda env list | grep "^torcharc " >/dev/null; then
     echo "conda env torcharc is already installed"
 else
-    conda create -n torcharc python=3.8.2 -y
+    conda create -n torcharc python=3.9.0 -y
     # Install ipykernel
     conda activate torcharc
     conda install ipykernel -y

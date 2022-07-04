@@ -75,7 +75,7 @@ class FourierPreprocessor(nn.Module):
     def build_positions(self, start: float = -1.0, end: float = 1.0):
         '''Build spatial coordinates as a meshgrid, i.e. coordinates laid out such that values along the channel is a point in coordinate, e.g. shape = (x, y, 2)'''
         x_y = [torch.linspace(start, end, steps=s) for s in self.spatial_shape]
-        return torch.stack(torch.meshgrid(*x_y), dim=len(self.spatial_shape))
+        return torch.stack(torch.meshgrid(*x_y, indexing='xy'), dim=len(self.spatial_shape))
 
     def build_pos_encoding(self, pos: torch.Tensor, max_reso: list = None) -> torch.Tensor:
         '''

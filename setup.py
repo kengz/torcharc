@@ -9,7 +9,6 @@ test_args = [
     '--log-level=INFO',
     '--log-cli-level=INFO',
     '--log-file-level=INFO',
-    '--no-flaky-report',
     '--timeout=300',
     '--cov=torcharc',
     'test',
@@ -32,7 +31,7 @@ class PyTest(TestCommand):
 
 setup(
     name='torcharc',
-    version='1.2.0',
+    version='1.2.1',
     description='Build PyTorch networks by specifying architectures.',
     long_description='https://github.com/kengz/torcharc',
     keywords='torcharc',
@@ -53,8 +52,7 @@ setup(
     tests_require=[
         'autopep8==1.5.3',
         'flake8==3.8.3',
-        'flaky==3.6.1',
-        'pytest==5.4.1',
+        'pytest',
         'pytest-cov==2.8.1',
         'pytest-timeout==1.3.4',
     ],
