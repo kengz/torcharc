@@ -1,4 +1,3 @@
-from torcharc import net_util
 from torcharc.module.merge import ConcatMerge, FiLMMerge, Merge
 import pytest
 import torch
