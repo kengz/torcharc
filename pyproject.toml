@@ -1,0 +1,41 @@
+[project]
+name = "torcharc"
+version = "2.0.0"
+description = "Build PyTorch networks by specifying architectures."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "einops>=0.8.0",
+    "numpy>=2.0.0",
+    "pydash>=8.0.0",
+]
+
+[project.optional-dependencies]
+pytorch = [
+  "torch>=2.5.1",
+  "torchvision>=0.20.1",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124", marker = "platform_system != 'Darwin'"},
+]
+torchvision = [
+  { index = "pytorch-cu124", marker = "platform_system != 'Darwin'"},
+]
+
+[dependency-groups]
+dev = [
+    "autopep8>=2.3.1",
+    "flake8>=7.1.1",
+    "jupyter>=1.1.1",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+]

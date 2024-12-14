@@ -1619,13 +1619,11 @@ Parameter Group 0
 
 ### Setup
 
+[Install uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management if you haven't already. Then run:
+
 ```bash
-# install the dev dependencies
-bin/setup
-# activate Conda environment
-conda activate torcharc
-# install PyTorch
-conda install pytorch -c pytorch
+# setup virtualenv
+venv sync
 ```
 
 ### Unit Tests
