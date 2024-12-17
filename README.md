@@ -4,14 +4,10 @@ Build PyTorch networks by specifying architectures.
 
 ## Installation
 
+Bring [your own PyTorch](https://docs.astral.sh/uv/guides/integration/pytorch/), then install this package:
+
 ```bash
 pip install torcharc
-```
-
-Bring your own PyTorch: this allows you to use the version of PyTorch as needed - GPU/CPU, nightly etc. For example:
-
-```bash
-conda install pytorch -c pytorch
 ```
 
 ## Usage
@@ -1623,7 +1619,7 @@ Parameter Group 0
 
 ```bash
 # setup virtualenv
-venv sync
+uv sync
 ```
 
 ### Unit Tests
