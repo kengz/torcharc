@@ -96,3 +96,36 @@ outputs = graph_module(x)
 print(f"B's Output: {outputs[0]}")
 print(f"C's Output: {outputs[1]}")
 
+
+# use this to redo the MLP example above
+linear1 = nn.Linear(128, 64)
+relu = nn.ReLU()
+linear2 = nn.Linear(64, 10)
+
+graph = Graph()
+input_node = graph.placeholder('x')
+node = input_node
+# node = graph.call_module('linear1', (node, linear1))
+# node = graph.call_module('relu', (node, relu))
+# node = graph.call_module('linear2', (node, linear2))
+# programmatically determine the name
+# ahh code construction determines the name
+modules = {}
+# use name with suffix by count if name already exists
+for i, module in enumerate([linear1, relu, linear2]):
+    name = module.__class__.__name__.lower()
+    if name in modules:
+        name = f"{name}{i}"
+    modules[name] = module
+    node = graph.call_module(name, (node,))
+
+graph.output(node)
+graph.lint()
+graph.print_tabular()
+gm = GraphModule(modules, graph)
+gm
+
+# test
+x = torch.randn(128)
+y = gm(x)
+y
