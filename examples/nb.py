@@ -83,7 +83,8 @@ input_node = graph.placeholder('x')  # Input node
 a_output = graph.call_module('A', args=(input_node,))  # A(x)
 b_output = graph.call_module('B', args=(a_output,))    # B(A(x))
 c_output = graph.call_module('C', args=(a_output,))    # C(A(x))
-graph.output((b_output, c_output))  # Output both B's and C's outputs
+graph.output({'B': b_output, 'C': c_output})  # Output both B's and C's outputs
+graph.find_nodes(op='call_module')
 
 # Create a GraphModule
 modules = {'A': A, 'B': B, 'C': C}
@@ -93,8 +94,9 @@ graph_module
 # Test the GraphModule
 x = torch.tensor([1.0])  # Input tensor
 outputs = graph_module(x)
-print(f"B's Output: {outputs[0]}")
-print(f"C's Output: {outputs[1]}")
+outputs
+print(f"B's Output: {outputs['A']}")
+print(f"C's Output: {outputs['B']}")
 
 
 # use this to redo the MLP example above

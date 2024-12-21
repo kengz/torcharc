@@ -1,0 +1,162 @@
+modules:
+  my_mlp:
+    - Linear:
+        in_features: 128
+        out_features: 64
+    - ReLU: null
+    - Linear:
+        in_features: 64
+        out_features: 10
+  my_mlp2:
+    - Linear:
+        in_features: 128
+        out_features: 64
+    - ReLU: null
+    - Linear:
+        in_features: 64
+        out_features: 10
+  concat12:
+    - Concat: null
+  # concat 2, forward to 3
+  my_mlp3:
+    - Linear:
+        in_features: 20
+        out_features: 10
+
+graph:
+  inputs: [x1, x2]
+  my_mlp:
+    args: [x1]
+  my_mlp2:
+    args: [x2]
+  concat12:
+    args: [my_mlp, my_mlp2]
+  my_mlp3:
+    args: [concat12]
+  output: [my_mlp3]
+
+# need some merge primitives
+---
+# Sequential(
+#   (0): Conv2d(3, 16, kernel_size=(4, 4), stride=(2, 2))
+#   (1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#   (2): ReLU()
+#   (3): Dropout2d(p=0.2, inplace=False)
+#   (4): Conv2d(16, 16, kernel_size=(4, 4), stride=(1, 1))
+#   (5): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#   (6): ReLU()
+#   (7): Dropout2d(p=0.2, inplace=False)
+# )
+
+- Conv2d:
+    in_channels: 3
+    out_channels: 16
+    kernel_size: [4, 4]
+    stride: [2, 2]
+- BatchNorm2d:
+    num_features: 16
+- ReLU: null
+- Dropout2d:
+    p: 0.2
+- Conv2d:
+    in_channels: 16
+    out_channels: 16
+    kernel_size: [4, 4]
+    stride: [1, 1]
+- BatchNorm2d:
+    num_features: 16
+- ReLU: null
+- Dropout2d:
+    p: 0.2
+
+---
+# Sequential(
+#   (0): Linear(in_features=8, out_features=64, bias=True)
+#   (1): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#   (2): ReLU()
+#   (3): Dropout(p=0.2, inplace=False)
+#   (4): Linear(in_features=64, out_features=32, bias=True)
+#   (5): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#   (6): ReLU()
+#   (7): Dropout(p=0.2, inplace=False)
+# )
+
+- Linear:
+    in_features: 8
+    out_features: 64
+- BatchNorm1d:
+    num_features: 64
+- ReLU: null
+- Dropout:
+    p: 0.2
+- Linear:
+    in_features: 64
+    out_features: 32
+- BatchNorm1d:
+    num_features: 32
+- ReLU: null
+- Dropout:
+    p: 0.2
+
+---
+# DAGNet(
+#   (module_dict): ModuleDict(
+#     (image): Sequential(
+#       (0): Conv2d(3, 16, kernel_size=(4, 4), stride=(2, 2))
+#       (1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#       (2): ReLU()
+#       (3): Dropout2d(p=0.2, inplace=False)
+#       (4): Conv2d(16, 16, kernel_size=(4, 4), stride=(1, 1))
+#       (5): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#       (6): ReLU()
+#       (7): Dropout2d(p=0.2, inplace=False)
+#     )
+#     (merge): FiLMMerge(
+#       (conditioner_scale): Linear(in_features=8, out_features=16, bias=True)
+#       (conditioner_shift): Linear(in_features=8, out_features=16, bias=True)
+#     )
+#     (Flatten): Flatten()
+#     (Linear): Sequential(
+#       (0): Linear(in_features=576, out_features=64, bias=True)
+#       (1): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#       (2): ReLU()
+#       (3): Dropout(p=0.2, inplace=False)
+#       (4): Linear(in_features=64, out_features=32, bias=True)
+#       (5): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+#       (6): ReLU()
+#       (7): Dropout(p=0.2, inplace=False)
+#     )
+#     (out): Linear(in_features=32, out_features=8, bias=True)
+#     (fork): SplitFork()
+#   )
+# )
+
+- image:
+    - Conv2d:
+        in_channels: 3
+        out_channels: 16
+        kernel_size: [4, 4]
+        stride: [2, 2]
+    - BatchNorm2d:
+        num_features: 16
+    - ReLU: null
+    - Dropout2d:
+        p: 0.2
+    - Conv2d:
+        in_channels: 16
+        out_channels: 16
+        kernel_size: [4, 4]
+        stride: [1, 1]
+    - BatchNorm2d:
+        num_features: 16
+    - ReLU: null
+    - Dropout2d:
+        p: 0.2
+- merge:
+    conditioner_scale:
+      in_features: 8
+      out_features: 16
+    conditioner_shift:
+      in_features: 8
+      out_features: 16
+- Flatten: null
