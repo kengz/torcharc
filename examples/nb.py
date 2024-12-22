@@ -133,7 +133,7 @@ y = gm(x)
 y
 
 
-class ConcatMerge(nn.Module):
+class ConcatMerge(torch.nn.Module):
     '''Merge layer to merge a dict of tensors by concatenating along dim=1. Reverse of Split'''
     def __init__(self, dim: int = 0):
         super().__init__()
@@ -142,8 +142,16 @@ class ConcatMerge(nn.Module):
     def forward(self, *args: torch.Tensor) -> torch.Tensor:
         return torch.cat(args, dim=self.dim)
 
-# register in torch.nn
-nn.ConcatMerge = ConcatMerge
+
+def register_nn(cls: type):
+    '''Register a module class in torch.nn'''
+    # first check for conflict
+    if hasattr(torch.nn, cls.__name__):
+        raise ValueError(f"Module {cls.__name__} already exists in torch.nn")
+    setattr(torch.nn, cls.__name__, cls)
+
+
+register_nn(ConcatMerge)
 
 spec_yaml = '''
 modules:
@@ -152,7 +160,7 @@ modules:
         - Linear:
             in_features: 128
             out_features: 64
-        - ReLU: {}
+        - ReLU:
         - Linear:
             in_features: 64
             out_features: 10
@@ -161,7 +169,7 @@ modules:
         - Linear:
             in_features: 128
             out_features: 64
-        - ReLU: {}
+        - ReLU:
         - Linear:
             in_features: 64
             out_features: 10
@@ -191,48 +199,61 @@ graph:
 spec = yaml.safe_load(spec_yaml)
 
 
-def build_sequential(module_specs: list[dict]) -> nn.Sequential:
-    module = nn.Sequential()
+def build_sequential(module_specs: list[dict]) -> torch.nn.Sequential:
+    module = torch.nn.Sequential()
     for module_spec in module_specs:
-        module_name, kwargs = next(iter(module_spec.items()))
-        cls = getattr(nn, module_name)
+        module_name = next(iter(module_spec))
+        cls = getattr(torch.nn, module_name)
+        kwargs = module_spec[module_name] or {}
         layer = cls(**kwargs)
         module.append(layer)
     return module
 
 
-# should only be sequential
-# create the modules
-modules = {}
-for name, module_spec in spec['modules'].items():
-    # module is always single-key dict
-    module_name = next(iter(module_spec))
-    cls = getattr(nn, module_name)
-    if cls == nn.Sequential:
-        module = build_sequential(module_spec[module_name])
+def build_modules(module_specs: dict) -> dict[str, torch.nn.Module]:
+    modules = {}
+    for name, module_spec in module_specs.items():
+        # module is always single-key dict
+        module_name = next(iter(module_spec))
+        cls = getattr(torch.nn, module_name)
+        if cls == torch.nn.Sequential:
+            module = build_sequential(module_spec[module_name])
+        else:
+            kwargs = module_spec[module_name] or {}
+            module = cls(**kwargs)
+        modules[name] = module
+    return modules
+
+
+def build_graph(graph_spec: dict) -> Graph:
+    graph = Graph()
+    _nodes = {}
+    # first, create inputs
+    for name in graph_spec['inputs']:
+        _nodes[name] = graph.placeholder(name)
+
+    # next, create modules
+    for name, in_names in graph_spec['modules'].items():
+        name_args, name_kwargs = in_names.get('args', []), in_names.get('kwargs', {})
+        args = tuple([_nodes[arg] for arg in name_args])
+        kwargs = {k: _nodes[in_name] for k, in_name in name_kwargs.items()}
+        _nodes[name] = graph.call_module(name, args=args, kwargs=kwargs)
+
+    # finally, create output
+    output = graph_spec['output']
+    if isinstance(output, list):
+        output = tuple([_nodes[name] for name in output])
     else:
-        module = cls(**module_spec[module_name])
-    modules[name] = module
+        output = {k: _nodes[name] for k, name in output.items()}
+    graph.output(output)
+    return graph
 
-modules
+# TODO test with Bert - ok best to register. also check for conflict and throw error
+# TODO test kwargs in graph
+# TODO test output with tuples vs dict
 
-graph = Graph()
-nodes = {}
-# first, create inputs
-for input_name in spec['graph']['inputs']:
-    nodes[input_name] = graph.placeholder(input_name)
-
-# next, create the intermediate nodes
-for name, subspec in spec['graph']['modules'].items():
-    # spec = {args: [x2]}
-    args = tuple([nodes[arg] for arg in subspec['args']])
-    node = graph.call_module(name, args)
-    nodes[name] = node
-
-# finally, create the output nodes
-# TODO args or dict
-graph.output([nodes[name] for name in spec['graph']['output']])
-
+modules = build_modules(spec['modules'])
+graph = build_graph(spec['graph'])
 graph.lint()
 graph.print_tabular()
 gm = fx.GraphModule(modules, graph)
