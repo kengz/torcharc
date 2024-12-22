@@ -134,6 +134,7 @@ if __name__ == '__main__':
     import torch
     import yaml
     spec = yaml.safe_load(open('v2/specs/mlp.yaml'))
+    spec = yaml.safe_load(open('v2/specs/mlp_lazy.yaml'))
     gm = build(spec)
     print(gm.code)
     x = torch.randn(1, 128)
