@@ -62,10 +62,10 @@ class FiLMMerge(nn.Module):
     FiLM(x) = gamma(z) * x + beta(z)
     """
 
-    def __init__(self, feature_size: int, conditioner_size: int):
+    def __init__(self, feature_dim: int, conditioner_dim: int):
         super().__init__()
-        self.gamma = nn.Linear(conditioner_size, feature_size)
-        self.beta = nn.Linear(conditioner_size, feature_size)
+        self.gamma = nn.Linear(conditioner_dim, feature_dim)
+        self.beta = nn.Linear(conditioner_dim, feature_dim)
 
     def forward(self, feature: torch.Tensor, conditioner: torch.Tensor) -> torch.Tensor:
         return self.gamma(conditioner) * feature + self.beta(conditioner)

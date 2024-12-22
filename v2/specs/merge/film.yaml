@@ -9,8 +9,8 @@ modules:
       out_features: 4
   merge_1_2:
     MergeFiLM:
-      feature_size: 10
-      condition_size: 4
+      feature_dim: 10
+      condition_dim: 4
   tail:
     Linear:
       in_features: 10
