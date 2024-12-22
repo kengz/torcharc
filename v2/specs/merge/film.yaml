@@ -1,14 +1,16 @@
 modules:
-  head_1:
+  feat:
     Linear:
       in_features: 32
       out_features: 10
-  head_2:
+  cond:
     Linear:
-      in_features: 32
-      out_features: 10
+      in_features: 16
+      out_features: 4
   merge_1_2:
     MergeFiLM:
+      feature_size: 10
+      condition_size: 4
   tail:
     Linear:
       in_features: 10
@@ -17,8 +19,10 @@ modules:
 graph:
   input: [x_1, x_2]
   modules:
-    head_1: [x_1]
-    head_2: [x_2]
-    merge_1_2: [head_1, head_2]
+    feat: [x_1]
+    cond: [x_2]
+    merge_1_2:
+      feature: feat
+      conditioner: cond
     tail: [merge_1_2]
   output: tail
