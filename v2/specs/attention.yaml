@@ -1,0 +1,26 @@
+modules:
+  src_embed:
+    LazyLinear:
+      out_features: 64
+  tgt_embed:
+    LazyLinear:
+      out_features: 64
+  attention:
+    MultiheadAttention:
+      embed_dim: 64
+      num_heads: 4
+  mlp:
+    LazyLinear:
+      out_features: 10
+
+graph:
+  input: [src_x, tgt_x]
+  modules:
+    src_embed: [src_x]
+    tgt_embed: [tgt_x]
+    attention:
+      query: src_embed
+      key: tgt_embed
+      value: tgt_embed
+    mlp: [attention]
+  output: mlp
