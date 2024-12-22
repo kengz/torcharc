@@ -1,0 +1,16 @@
+import merge
+import torch
+
+
+def register_nn(cls: type):
+    """Register a module class in torch.nn"""
+    # first check for conflict
+    if hasattr(torch.nn, cls.__name__):
+        raise ValueError(f"Module {cls.__name__} already exists in torch.nn")
+    setattr(torch.nn, cls.__name__, cls)
+
+
+# iterate over the classes in merge.py and register them in torch.nn
+for cls in merge.__dict__.values():
+    if isinstance(cls, type):
+        register_nn(cls)

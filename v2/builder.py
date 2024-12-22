@@ -82,8 +82,9 @@ def build_graph(graph_spec: dict) -> fx.Graph:
         raise ValueError(f'Invalid input type: {type(input_spec)}')
 
     # next, create modules
-    for name, in_names in graph_spec['modules'].items():
-        name_args, name_kwargs = in_names.get('args', []), in_names.get('kwargs', {})
+    for name, module_spec in graph_spec['modules'].items():
+        # TODO use pydantic to default to [] or {}
+        name_args, name_kwargs = module_spec.get('args', []), module_spec.get('kwargs', {})
         args = tuple([_nodes[arg] for arg in name_args])
         kwargs = {k: _nodes[in_name] for k, in_name in name_kwargs.items()}
         _nodes[name] = graph.call_module(name, args=args, kwargs=kwargs)
