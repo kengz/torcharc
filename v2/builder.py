@@ -57,16 +57,12 @@ def build_modules(module_specs: dict) -> dict[str, nn.Module]:
 def build_graph(graph_spec: dict) -> fx.Graph:
     '''
     Build graph from a graph spec, e.g.
-    input: [x1, x2]
+    input: [x_1, x_2]
     modules:
-      head1:
-        args: [x1]
-      head2:
-        args: [x2]
-      concat12:
-        args: [head1, head2]
-      tail:
-        args: [concat12]
+      head_1: [x_1]
+      head_2: [x_2]
+      concat_1_2: [head_1, head_2]
+      tail: [concat_1_2]
     output: tail
     '''
     graph = fx.Graph()
@@ -82,11 +78,16 @@ def build_graph(graph_spec: dict) -> fx.Graph:
         raise ValueError(f'Invalid input type: {type(input_spec)}')
 
     # next, create modules
-    for name, module_spec in graph_spec['modules'].items():
-        # TODO use pydantic to default to [] or {}
-        name_args, name_kwargs = module_spec.get('args', []), module_spec.get('kwargs', {})
-        args = tuple([_nodes[arg] for arg in name_args])
-        kwargs = {k: _nodes[in_name] for k, in_name in name_kwargs.items()}
+    for name, in_nodes in graph_spec['modules'].items():
+        # either list or dict
+        if isinstance(in_nodes, list):
+            args = tuple([_nodes[name] for name in in_nodes])
+            kwargs = {}
+        elif isinstance(in_nodes, dict):
+            args = ()
+            kwargs = {k: _nodes[name] for k, name in in_nodes.items()}
+        else:
+            raise ValueError(f'Invalid module type: {type(in_nodes)}')
         _nodes[name] = graph.call_module(name, args=args, kwargs=kwargs)
 
     # finally, create output
@@ -120,8 +121,7 @@ def build(spec: dict) -> fx.GraphModule:
     graph:
       input: x
       modules:
-        mlp:
-          args: [x]
+        mlp: [x]
       output: mlp
     '''
     modules = build_modules(spec['modules'])

@@ -48,5 +48,12 @@ class MergeMean(MergeDim):
         return torch.mean(torch.stack(args, dim=self.dim), dim=self.dim)
 
 
+class MergeDot(nn.Module):
+    """Merge module using dot-product, e.g. similarity matrix for CLIP"""
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.matmul(x, y.T)
+
+
 # TODO FiLM
 # TODO attention?

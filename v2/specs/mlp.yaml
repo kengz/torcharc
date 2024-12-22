@@ -10,8 +10,10 @@ modules:
           out_features: 10
 
 graph:
+  # TODO this can be string or list
   input: x
   modules:
-    mlp:
-      args: [x]
+    # TODO shortcut: list -> args, dict -> kwargs
+    mlp: [x]
+  # TODO this can be string, list or dict to reflect return formats
   output: mlp
