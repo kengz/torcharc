@@ -1,3 +1,5 @@
+import os
+
 import lightning as L
 import torch
 import yaml
@@ -75,8 +77,9 @@ class MNISTClassifier(L.LightningModule):
 
 if __name__ == "__main__":
     dm = MNISTDataModule()
-    model = MNISTClassifier("torcharc/example/spec/mnist_conv2d.yaml")
+    arc = os.getenv("ARC", "conv2d")  # conv2d, mlp, rnn
+    model = MNISTClassifier(f"torcharc/example/spec/mnist/{arc}.yaml")
     # launch tensorboard with `tensorboard --logdir ./tb_logs`
-    logger = TensorBoardLogger("tb_logs", name="mnist", log_graph=True)
+    logger = TensorBoardLogger("tb_logs", name=arc, log_graph=True)
     trainer = L.Trainer(max_epochs=1, logger=logger)
     trainer.fit(model, dm)

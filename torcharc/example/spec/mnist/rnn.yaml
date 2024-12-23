@@ -1,0 +1,56 @@
+# MNIST RNN model example from PyTorch https://github.com/pytorch/examples/blob/main/mnist_rnn/main.py
+# NOTE this is merely for illustration of functionality; RNN is not practical for MNIST
+modules:
+  flatten_seq:
+    # take (batch, 1, 28, 28) and return (batch, 28, 28)
+    Flatten:
+      start_dim: 0
+      end_dim: 1
+  rnn:
+    LSTM:
+      input_size: 28
+      hidden_size: 64
+      num_layers: 2
+      batch_first: true
+  get_output:
+    # rnn output is tuple; get the first element to pass to mlp
+    Get:
+      key: 0
+  # get last output of RNN by taking last element: output = output[:, -1, :] via fork in dim 1 then flatten
+  # NOTE this is merely for illustration of functionality
+  fork_last:
+    ForkSplit:
+      split_size_or_sections: [27, 1]
+  get_last:
+    Get:
+      key: 1
+  flatten_last:
+    Flatten:
+      start_dim: 1
+      end_dim: 2
+  mlp:
+    Sequential:
+      - LazyBatchNorm1d:
+      - Dropout2d:
+          p: 0.25
+      - LazyLinear:
+          out_features: 32
+      - ReLU:
+      - Dropout2d:
+          p: 0.5
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: im
+  modules:
+    flatten_seq: [im]
+    rnn: [flatten_seq]
+    get_output: [rnn]
+    fork_last: [get_output]
+    get_last: [fork_last]
+    flatten_last: [get_last]
+    mlp: [flatten_last]
+  output: mlp
