@@ -1,4 +1,5 @@
-from v2.module import get, fork, merge
+from torcharc.module import get, fork, merge
+from torcharc.builder import build  # noqa
 import torch
 
 

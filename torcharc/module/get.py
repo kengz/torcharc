@@ -1,4 +1,4 @@
-# Helper module to get specific key of module multi-output (tuple/list/dict) as it can't be split in PyTorch Graph Node
+# Module to get specific key of module multi-output (tuple/list/dict) as it can't be split in PyTorch Graph Node
 from typing import Iterable
 
 import torch
