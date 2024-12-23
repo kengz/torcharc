@@ -30,9 +30,9 @@ torchvision = [
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
+    "lightning>=2.5.0.post0",
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
-    "pytorch-lightning>=2.5.0.post0",
     "ruff>=0.8.3",
     "tensorboard>=2.18.0",
     "torch>=2.5.1",

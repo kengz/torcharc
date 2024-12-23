@@ -1,6 +1,7 @@
 # project
-lightning_logs/
 data/
+lightning_logs/
+tb_logs/
 
 # System
 .DS_Store

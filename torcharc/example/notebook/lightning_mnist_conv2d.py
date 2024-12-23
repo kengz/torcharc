@@ -1,6 +1,7 @@
-import pytorch_lightning as pl
+import lightning as L
 import torch
 import yaml
+from lightning.pytorch.loggers import TensorBoardLogger
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
@@ -10,7 +11,7 @@ from torchvision.datasets import MNIST
 import torcharc
 
 
-class MNISTDataModule(pl.LightningDataModule):
+class MNISTDataModule(L.LightningDataModule):
     def __init__(self, batch_size: int = 32, data_dir: str = "./data/"):
         super().__init__()
         self.data_dir = data_dir
@@ -37,13 +38,15 @@ class MNISTDataModule(pl.LightningDataModule):
         return DataLoader(self.mnist_val, batch_size=self.batch_size)
 
 
-class MNISTClassifier(pl.LightningModule):
+class MNISTClassifier(L.LightningModule):
     def __init__(self, model_spec_path: str):
         super().__init__()
         spec = yaml.safe_load(open(model_spec_path))
         self.model = torcharc.build(spec)
         self.lr = 1e-3
         self.accuracy = Accuracy(task="multiclass", num_classes=10, top_k=1)
+        # set this for log_graph and reporting params
+        self.example_input_array = torch.rand(1, 1, 28, 28)
 
     def forward(self, x):
         return self.model(x)
@@ -73,5 +76,7 @@ class MNISTClassifier(pl.LightningModule):
 if __name__ == "__main__":
     dm = MNISTDataModule()
     model = MNISTClassifier("torcharc/example/spec/mnist_conv2d.yaml")
-    trainer = pl.Trainer(max_epochs=2)
+    # launch tensorboard with `tensorboard --logdir ./tb_logs`
+    logger = TensorBoardLogger("tb_logs", name="mnist", log_graph=True)
+    trainer = L.Trainer(max_epochs=1, logger=logger)
     trainer.fit(model, dm)
