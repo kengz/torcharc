@@ -7,7 +7,7 @@ modules:
     Linear:
       in_features: 32
       out_features: 10
-  merge_1_2:
+  merge_0_1:
     MergeDot:
   tail:
     Linear:
@@ -19,6 +19,6 @@ graph:
   modules:
     head_0: [x_0]
     head_1: [x_1]
-    merge_1_2: [head_0, head_1]
-    tail: [merge_1_2]
+    merge_0_1: [head_0, head_1]
+    tail: [merge_0_1]
   output: tail

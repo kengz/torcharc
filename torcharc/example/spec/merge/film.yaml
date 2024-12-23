@@ -7,7 +7,7 @@ modules:
     Linear:
       in_features: 16
       out_features: 4
-  merge_1_2:
+  merge_0_1:
     MergeFiLM:
       feature_dim: 10
       condition_dim: 4
@@ -21,8 +21,8 @@ graph:
   modules:
     feat: [x_0]
     cond: [x_1]
-    merge_1_2:
+    merge_0_1:
       feature: feat
       conditioner: cond
-    tail: [merge_1_2]
+    tail: [merge_0_1]
   output: tail
