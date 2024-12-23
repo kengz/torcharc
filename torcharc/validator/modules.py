@@ -1,17 +1,20 @@
 # Pydantic validation for modules spec
 from pydantic import RootModel, Field, field_validator
 from torch import nn
-import yaml
 
 
-class ModuleSpec(RootModel):
+class NNSpec(RootModel):
     """
-    The basic module spec used to construct a nn.Module, where key = module class name, and value = kwargs, i.e. nn.<key>(**value).
+    The basic spec used to construct a nn.Module, where key = nn class name, and value = kwargs, i.e. nn.<key>(**value).
     Must be a single-key dict.
+    E.g.
+    Linear:
+        in_features: 10
+        out_features: 1
     """
 
     root: dict[str, dict] = Field(
-        description="Module spec for nn.Module, with key as module class name, and value as kwargs.",
+        description="Module spec for nn.Module, with key as nn class name, and value as kwargs.",
         examples=[{"Linear": {"in_features": 128, "out_features": 64}}, {"ReLU": {}}],
     )
 
@@ -37,42 +40,88 @@ class ModuleSpec(RootModel):
             raise ValueError(e) from e
 
     def build(self) -> nn.Module:
-        """Build nn.Module from module spec."""
+        """Build nn.Module from nn spec."""
         class_name = next(iter(self.root))
         cls = getattr(nn, class_name)
         kwargs = self.root[class_name]
         return cls(**kwargs)
 
 
-module = ModuleSpec({"Linear": {"in_features": 128, "out_features": 64}}).build()
-ModuleSpec({"ReLU": None}).build()
-ModuleSpec({"ReLU": {}}).build()
-
-ModuleSpec({"foo": {"in_features": 128, "out_features": 64}})
-
-sample_yaml = """
-modules:
-  mlp:
+class SequentialSpec(RootModel):
+    """
+    Sequential spec where key = Sequential and value = list of NNSpecs.
+    E.g.
     Sequential:
-      - Linear:
-          in_features: 128
-          out_features: 64
-      - ReLU:
-      - Linear:
-          in_features: 64
-          out_features: 10
-  body:
+        - Linear:
+            in_features: 128
+            out_features: 64
+        - ReLU:
+        - Linear:
+            in_features: 64
+            out_features: 10
+    """
+
+    root: dict[str, list[NNSpec]] = Field(
+        description="Sequential module spec where value is a list of NNSpec.",
+        examples=[
+            {
+                "Sequential": [
+                    {"Linear": {"in_features": 128, "out_features": 64}},
+                    {"ReLU": {}},
+                    {"Linear": {"in_features": 64, "out_features": 10}},
+                ]
+            }
+        ],
+    )
+
+    @field_validator("root", mode="before")
+    def is_single_key_dict(value: dict) -> dict:
+        return NNSpec.is_single_key_dict(value)
+
+    @field_validator("root", mode="before")
+    def key_is_sequential(value: dict) -> dict:
+        assert (
+            next(iter(value)) == "Sequential"
+        ), "Key must be 'Sequential' if using SequentialSpec."
+        return value
+
+    def build(self) -> nn.Sequential:
+        """Build nn.Sequential from sequential spec."""
+        nn_specs = next(iter(self.root.values()))
+        return nn.Sequential(*[nn_spec.build() for nn_spec in nn_specs])
+
+
+class ModuleSpec(RootModel):
+    """
+    Higher level module spec where value can be either NNSpec or SequentialSpec.
+    E.g. (plain NN)
     Linear:
-      in_features: 10
-      out_features: 1
+        in_features: 10
+        out_features: 1
 
-graph:
-  input: x
-  modules:
-    mlp: [x]
-    body: [mlp]
-  output: body
-"""
+    E.g. (Sequential)
+    Sequential:
+        - Linear:
+            in_features: 128
+            out_features: 64
+        - ReLU:
+        - Linear:
+            in_features: 64
+            out_features: 10
+    """
 
-# modules is a dict of module_name -> module_spec.
-# where module_spec is either {Sequential: [module_spec]} or {str: kwargs}
+    root: SequentialSpec | NNSpec = Field(
+        description="Higher level module spec where value can be either NNSpec or SequentialSpec.",
+        examples=[
+            {"Linear": {"in_features": 128, "out_features": 64}},
+            {"Sequential": [{"Linear": {"in_features": 128, "out_features": 64}}]},
+        ],
+    )
+
+    @field_validator("root", mode="before")
+    def is_single_key_dict(value: dict) -> dict:
+        return NNSpec.is_single_key_dict(value)
+
+    def build(self) -> nn.Module:
+        """Build nn.Module from module spec."""
+        return self.root.build()
