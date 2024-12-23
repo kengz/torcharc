@@ -1,4 +1,4 @@
-from v2.module import get, merge
+from v2.module import get, fork, merge
 import torch
 
 
@@ -11,7 +11,7 @@ def register_nn(cls: type):
 
 
 # iterate over the classes in modules and register them in torch.nn
-for module in [get, merge]:
+for module in [get, fork, merge]:
     for cls in module.__dict__.values():
         if isinstance(cls, type):
             register_nn(cls)

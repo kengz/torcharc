@@ -17,10 +17,10 @@ modules:
       out_features: 1
 
 graph:
-  input: [x_1, x_2]
+  input: [x_0, x_1]
   modules:
-    feat: [x_1]
-    cond: [x_2]
+    feat: [x_0]
+    cond: [x_1]
     merge_1_2:
       feature: feat
       conditioner: cond

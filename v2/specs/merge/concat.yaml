@@ -1,9 +1,9 @@
 modules:
-  head_1:
+  head_0:
     Linear:
       in_features: 32
       out_features: 10
-  head_2:
+  head_1:
     Linear:
       in_features: 32
       out_features: 10
@@ -15,10 +15,10 @@ modules:
       out_features: 1
 
 graph:
-  input: [x_1, x_2]
+  input: [x_0, x_1]
   modules:
+    head_0: [x_0]
     head_1: [x_1]
-    head_2: [x_2]
-    merge_1_2: [head_1, head_2]
+    merge_1_2: [head_0, head_1]
     tail: [merge_1_2]
   output: tail

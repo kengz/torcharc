@@ -57,12 +57,12 @@ def build_modules(module_specs: dict) -> dict[str, nn.Module]:
 def build_graph(graph_spec: dict) -> fx.Graph:
     '''
     Build graph from a graph spec, e.g.
-    input: [x_1, x_2]
+    input: [x_0, x_1]
     modules:
+      head_0: [x_0]
       head_1: [x_1]
-      head_2: [x_2]
-      concat_1_2: [head_1, head_2]
-      tail: [concat_1_2]
+      concat_0_1: [head_0, head_1]
+      tail: [concat_0_1]
     output: tail
     '''
     graph = fx.Graph()
@@ -136,9 +136,11 @@ if __name__ == '__main__':
     import v2.module
     spec = yaml.safe_load(open('v2/specs/mlp.yaml'))
     spec = yaml.safe_load(open('v2/specs/mlp_lazy.yaml'))
+    spec = yaml.safe_load(open('v2/specs/fork/chunk.yaml'))
+    spec = yaml.safe_load(open('v2/specs/fork/split.yaml'))
     gm = build(spec)
     print(gm.code)
-    x = torch.randn(1, 128)
+    x = torch.randn(1, 32)
     y = gm(x)
     y
     spec = yaml.safe_load(open('v2/specs/transformer.yaml'))
