@@ -133,6 +133,7 @@ def build(spec: dict) -> fx.GraphModule:
 if __name__ == '__main__':
     import torch
     import yaml
+    import v2.module
     spec = yaml.safe_load(open('v2/specs/mlp.yaml'))
     spec = yaml.safe_load(open('v2/specs/mlp_lazy.yaml'))
     gm = build(spec)
@@ -149,6 +150,11 @@ if __name__ == '__main__':
     y = gm(src_x=src_x, tgt_x=tgt_x)
     y.shape
 
-    # TODO attention and RNN has tuple as output. maybe do first with guard
     spec = yaml.safe_load(open('v2/specs/attention.yaml'))
-
+    gm = build(spec)
+    batch_size = 4
+    seq_len = 10
+    src_x = torch.randn(seq_len, batch_size, 20)
+    tgt_x = torch.randn(seq_len, batch_size, 10)
+    y = gm(src_x=src_x, tgt_x=tgt_x)
+    y.shape

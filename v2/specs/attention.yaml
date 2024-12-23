@@ -9,6 +9,10 @@ modules:
     MultiheadAttention:
       embed_dim: 64
       num_heads: 4
+  get_attn:
+    # attention output is tuple; get the first element to pass to mlp
+    Get:
+      key: 0
   mlp:
     LazyLinear:
       out_features: 10
@@ -22,5 +26,6 @@ graph:
       query: src_embed
       key: tgt_embed
       value: tgt_embed
-    mlp: [attention]
+    get_attn: [attention]
+    mlp: [get_attn]
   output: mlp
