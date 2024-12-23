@@ -1,5 +1,6 @@
 import torch
 import yaml
+
 import torcharc
 
 spec = yaml.safe_load(open("torcharc/example/spec/mlp.yaml"))
@@ -17,6 +18,7 @@ print(gm.code)
 x = torch.randn(1, 32)
 y = gm(x)
 y
+
 spec = yaml.safe_load(open("torcharc/example/spec/transformer.yaml"))
 gm = torcharc.build(spec)
 batch_size = 4

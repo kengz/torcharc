@@ -1,5 +1,5 @@
 from torcharc.module import get, fork, merge
-from torcharc.builder import build  # noqa
+from torcharc.validator.spec import build, Spec  # noqa
 import torch
 
 

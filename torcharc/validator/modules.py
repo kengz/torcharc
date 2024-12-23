@@ -1,5 +1,5 @@
 # Pydantic validation for modules spec
-from pydantic import RootModel, Field, field_validator
+from pydantic import Field, RootModel, field_validator
 from torch import nn
 
 
@@ -125,3 +125,67 @@ class ModuleSpec(RootModel):
     def build(self) -> nn.Module:
         """Build nn.Module from module spec."""
         return self.root.build()
+
+
+# module = NNSpec({"Linear": {"in_features": 128, "out_features": 64}}).build()
+# NNSpec({"ReLU": None}).build()
+# NNSpec({"ReLU": {}}).build()
+
+# NNSpec({"foo": {"in_features": 128, "out_features": 64}})
+
+# sspec = SequentialSpec(
+#     {
+#         "Sequential": [
+#             {"Linear": {"in_features": 128, "out_features": 64}},
+#             {"ReLU": {}},
+#             {"Linear": {"in_features": 64, "out_features": 10}},
+#         ]
+#     }
+# )
+# sspec.build()
+
+
+# module = ModuleSpec({"Linear": {"in_features": 128, "out_features": 64}}).build()
+# ModuleSpec({"ReLU": None}).build()
+# ModuleSpec({"ReLU": {}}).build()
+
+# ModuleSpec({"foo": {"in_features": 128, "out_features": 64}})
+
+# sspec = ModuleSpec(
+#     {
+#         "Sequential": [
+#             {"Linear": {"in_features": 128, "out_features": 64}},
+#             {"ReLU": {}},
+#             {"Linear": {"in_features": 64, "out_features": 10}},
+#         ]
+#     }
+# )
+# sspec.build()
+
+
+# sample_yaml = """
+# modules:
+#   mlp:
+#     Sequential:
+#       - Linear:
+#           in_features: 128
+#           out_features: 64
+#       - ReLU:
+#       - Linear:
+#           in_features: 64
+#           out_features: 10
+#   body:
+#     Linear:
+#       in_features: 10
+#       out_features: 1
+
+# graph:
+#   input: x
+#   modules:
+#     mlp: [x]
+#     body: [mlp]
+#   output: body
+# """
+
+# # modules is a dict of module_name -> module_spec.
+# # where module_spec is either {Sequential: [module_spec]} or {str: kwargs}
