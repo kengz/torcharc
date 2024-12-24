@@ -1,15 +1,13 @@
 # MNIST Conv2d model example from PyTorch https://github.com/pytorch/examples/blob/main/mnist/main.py
-# NOTE this is for illustration; using lazy modules is recommended for ease https://pytorch.org/docs/stable/generated/torch.nn.LazyConv2d.html
+# NOTE lazy modules is recommended for ease https://pytorch.org/docs/stable/generated/torch.nn.LazyConv2d.html
 modules:
   conv2d:
     Sequential:
-      - Conv2d:
-          in_channels: 1
+      - LazyConv2d:
           out_channels: 32
           kernel_size: 3
       - ReLU:
-      - Conv2d:
-          in_channels: 32
+      - LazyConv2d:
           out_channels: 64
           kernel_size: 3
       - ReLU:
@@ -18,14 +16,12 @@ modules:
       - Dropout:
           p: 0.25
       - Flatten:
-      - Linear:
-          in_features: 9216
+      - LazyLinear:
           out_features: 128
       - ReLU:
       - Dropout:
           p: 0.5
-      - Linear:
-          in_features: 128
+      - LazyLinear:
           out_features: 10
       - LogSoftmax:
           dim: 1
