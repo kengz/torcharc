@@ -16,7 +16,7 @@ Given just the architecture, `torcharc` can build generic DAG (directed acyclic 
 
 - single-input-output modules: `Conv1d, Conv2d, Conv3d, Linear, Perceiver` or any other valid nn.Module
 - fork modules: `ReuseFork, SplitFork`
-- merge modules: `ConcatMerge, FiLMMerge`
+- merge modules: `ConcatMerge, MergeFiLM`
 
 The custom modules are defined in [`torcharc/module`](https://github.com/kengz/torcharc/tree/master/torcharc/module), registered in [`torcharc/module_builder.py`](https://github.com/kengz/torcharc/blob/master/torcharc/module_builder.py).
 
@@ -1466,7 +1466,7 @@ arc = {
         'init': 'kaiming_uniform_',
     },
     'merge': {
-        'type': 'FiLMMerge',
+        'type': 'MergeFiLM',
         'in_names': ['image', 'vector'],
         'names': {'feature': 'image', 'conditioner': 'vector'},
     },
@@ -1515,7 +1515,7 @@ DAGNet(
       (6): ReLU()
       (7): Dropout2d(p=0.2, inplace=False)
     )
-    (merge): FiLMMerge(
+    (merge): MergeFiLM(
       (conditioner_scale): Linear(in_features=8, out_features=16, bias=True)
       (conditioner_shift): Linear(in_features=8, out_features=16, bias=True)
     )

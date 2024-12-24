@@ -55,7 +55,7 @@ class MergeDot(nn.Module):
         return torch.matmul(x, y.T)
 
 
-class FiLMMerge(nn.Module):
+class MergeFiLM(nn.Module):
     """
     Merge layer capture interaction between 2 features as linear transformation using FiLM: Feature-wise Linear Modulation https://distill.pub/2018/feature-wise-transformations/
     assuming x is a FiLM layer's input, z is a conditioning input, and gamma and beta are z-dependent scaling and shifting vectors

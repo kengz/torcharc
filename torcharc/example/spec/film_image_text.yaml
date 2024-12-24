@@ -1,0 +1,66 @@
+# FiLM to combine image and text https://distill.pub/2018/feature-wise-transformations/
+modules:
+  conv2d:
+    Sequential:
+      - LazyConv2d:
+          out_channels: 32
+          kernel_size: 3
+      - ReLU:
+      - LazyConv2d:
+          out_channels: 64
+          kernel_size: 3
+      - ReLU:
+      - MaxPool2d:
+          kernel_size: 2
+      - Dropout:
+          p: 0.25
+      - Flatten:
+      - LazyLinear:
+          out_features: 512
+
+  text_token_embed:
+    Embedding:
+      num_embeddings: 10000
+      embedding_dim: 256
+  text_tfmr:
+    Transformer:
+      d_model: 256
+      nhead: 8
+      dropout: 0.1
+  text_embed:
+    # pooling over the token embeddings
+    TorchFn:
+      name: mean
+      dim: 1
+
+  merge_film:
+    MergeFiLM:
+      # image embedding (conv output)
+      feature_dim: 512
+      # text embedding (text_tfmr output)
+      conditioner_dim: 256
+
+  classifier:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: [image, text]
+  modules:
+    conv2d: [image]
+    text_token_embed: [text]
+    text_tfmr:
+      src: text_token_embed
+      tgt: text_token_embed
+    text_embed: [text_tfmr]
+    merge_film:
+      feature: conv2d
+      conditioner: text_embed
+    classifier: [merge_film]
+  output: classifier

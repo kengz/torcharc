@@ -16,7 +16,7 @@ modules:
           dim: 1
 
 graph:
-  input: im
+  input: image
   modules:
-    mlp: [im]
+    mlp: [image]
   output: mlp

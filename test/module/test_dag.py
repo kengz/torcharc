@@ -21,8 +21,8 @@ def test_dag_concatmerge():
     assert isinstance(ys, torch.Tensor)
 
 
-def test_dag_filmmerge():
-    arc = arc_ref.REF_ARCS['FiLMMerge']
+def test_dag_MergeFiLM():
+    arc = arc_ref.REF_ARCS['MergeFiLM']
     in_shapes = arc['dag_in_shape']
     xs = net_util.get_rand_tensor(in_shapes)
     model = dag.DAGNet(arc)

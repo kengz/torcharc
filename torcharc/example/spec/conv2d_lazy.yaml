@@ -27,7 +27,7 @@ modules:
           dim: 1
 
 graph:
-  input: im
+  input: image
   modules:
-    conv2d: [im]
+    conv2d: [image]
   output: conv2d

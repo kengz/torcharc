@@ -62,12 +62,12 @@ def test_get_init_fn(init, activation):
         nn.SplitFork,
     ), (
         {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['image', 'vector'],
             'names': {'feature': 'image', 'conditioner': 'vector'},
             'shapes': {'image': [16, 6, 6], 'vector': [8]}
         },
-        nn.FiLMMerge,
+        nn.MergeFiLM,
     ), (
         {
             'type': 'ConcatMerge',
@@ -196,7 +196,7 @@ def test_infer_in_shape_default(arc, xs, in_shape_key, in_shape):
         None,
     ), (
         {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['image', 'vector'],
             'names': {'feature': 'image', 'conditioner': 'vector'},
         },
@@ -272,7 +272,7 @@ def test_carry_forward_dict_default(arc, xs):
         ['vector'],
     ), (
         {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['image', 'vector'],
             'names': {'feature': 'image', 'conditioner': 'vector'},
             'shapes': {'image': [3, 20, 20], 'vector': [8]}

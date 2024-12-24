@@ -19,7 +19,7 @@ class ConcatMerge(Merge):
         return torch.cat(list(xs.values()), dim=1)
 
 
-class FiLMMerge(Merge):
+class MergeFiLM(Merge):
     '''
     Merge layer to merge a dict of 2 tensors by Feature-wise Linear Modulation layer https://distill.pub/2018/feature-wise-transformations/
     Takes a feature tensor and conditioning tensor and affine-transforms it with a conditioning tensor:

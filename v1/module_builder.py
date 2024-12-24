@@ -13,7 +13,7 @@ import torch
 setattr(torch.nn, 'ReuseFork', fork.ReuseFork)
 setattr(torch.nn, 'SplitFork', fork.SplitFork)
 setattr(torch.nn, 'ConcatMerge', merge.ConcatMerge)
-setattr(torch.nn, 'FiLMMerge', merge.FiLMMerge)
+setattr(torch.nn, 'MergeFiLM', merge.MergeFiLM)
 setattr(torch.nn, 'Perceiver', perceiver.Perceiver)
 
 setattr(torch.optim, 'GlobalAdam', optim.GlobalAdam)
@@ -87,9 +87,9 @@ def infer_in_shape(arc: dict, xs: Union[torch.Tensor, dict]) -> None:
         assert len(xs.shape) >= 2, f'xs shape {xs.shape} is not meant for {nn_type} layer'
         in_shape = list(xs.shape)[1:]
         arc.update(in_shape=in_shape)
-    elif nn_type == 'FiLMMerge':
+    elif nn_type == 'MergeFiLM':
         assert isinstance(xs, dict)
-        assert len(arc['in_names']) == 2, 'FiLMMerge in_names should only specify 2 keys for feature and conditioner'
+        assert len(arc['in_names']) == 2, 'MergeFiLM in_names should only specify 2 keys for feature and conditioner'
         shapes = {name: list(x.shape)[1:] for name, x in xs.items() if name in arc['in_names']}
         arc.update(shapes=shapes)
     else:

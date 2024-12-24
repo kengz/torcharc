@@ -1,4 +1,4 @@
-from torcharc.module.merge import ConcatMerge, FiLMMerge, Merge
+from torcharc.module.merge import ConcatMerge, MergeFiLM, Merge
 import pytest
 import torch
 
@@ -29,7 +29,7 @@ def test_film_affine_transform(feature):
     feature_dim = len(feature.shape)
     conditioner_scale = torch.tensor([[1.0, 0.0, 1.0]])
     conditioner_shift = torch.zeros([batch_size, n_feat])
-    y = FiLMMerge.affine_transform(feature, conditioner_scale, conditioner_shift)
+    y = MergeFiLM.affine_transform(feature, conditioner_scale, conditioner_shift)
     if feature_dim > 2:
         mean_y = y.mean(list(range(feature_dim))[2:])
     else:
@@ -53,7 +53,7 @@ def test_film_affine_transform(feature):
     )
 ])
 def test_film_merge(names, shapes, xs):
-    merge = FiLMMerge(names, shapes)
+    merge = MergeFiLM(names, shapes)
     assert isinstance(merge, Merge)
     y = merge(xs)
     assert y.shape == xs[names['feature']].shape

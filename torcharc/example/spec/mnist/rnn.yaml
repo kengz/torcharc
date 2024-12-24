@@ -43,9 +43,9 @@ modules:
           dim: 1
 
 graph:
-  input: im
+  input: image
   modules:
-    flatten_seq: [im]
+    flatten_seq: [image]
     rnn: [flatten_seq]
     get_output: [rnn]
     get_seq_last: [get_output]

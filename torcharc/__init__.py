@@ -1,4 +1,4 @@
-from torcharc.module import get, fork, merge
+from torcharc.module import fn, get, fork, merge
 from torcharc.validator.spec import build, Spec  # noqa
 import torch
 
@@ -12,7 +12,7 @@ def register_nn(cls: type):
 
 
 # iterate over the classes in modules and register them in torch.nn
-for module in [get, fork, merge]:
+for module in [fn, get, fork, merge]:
     for cls in module.__dict__.values():
         if isinstance(cls, type):
             register_nn(cls)

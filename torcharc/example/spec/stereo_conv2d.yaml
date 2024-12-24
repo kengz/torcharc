@@ -1,0 +1,49 @@
+# stereoscopic vision conv2d classifier
+modules:
+  # single conv2d shared for left and right
+  conv2d:
+    Sequential:
+      - LazyConv2d:
+          out_channels: 32
+          kernel_size: 3
+      - ReLU:
+      - LazyConv2d:
+          out_channels: 64
+          kernel_size: 3
+      - ReLU:
+      - MaxPool2d:
+          kernel_size: 2
+      - Dropout:
+          p: 0.25
+      - Flatten:
+  # separate identical mlp for left and right for processing
+  left_mlp: &left_mlp
+    Sequential:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 128
+      - ReLU:
+  right_mlp:
+    <<: *left_mlp
+  # merge left and right with dot product for stereo vision
+  stereo_merge:
+    MergeDot:
+  # classify with mlp
+  mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: [left_im, right_im]
+  modules:
+    conv2d: [left_im]
+    # TODO gap: reuse
+  output: conv2d

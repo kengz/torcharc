@@ -410,9 +410,9 @@ REF_ARCS = {
         'type': 'ConcatMerge',
         'in_names': ['vector_0', 'vector_1', 'vector_2'],
     },
-    'FiLMMerge': {
+    'MergeFiLM': {
         'dag_in_shape': {'image': [3, 20, 20], 'vector': [8]},
-        'type': 'FiLMMerge',
+        'type': 'MergeFiLM',
         'in_names': ['image', 'vector'],
         'names': {'feature': 'image', 'conditioner': 'vector'},
     },
@@ -429,7 +429,7 @@ REF_ARCS = {
     'merge_fork': {
         'dag_in_shape': {'vector_0': [8], 'vector_1': [16]},
         'merge': {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['vector_0', 'vector_1'],
             'names': {'feature': 'vector_0', 'conditioner': 'vector_1'},
         },
@@ -445,7 +445,7 @@ REF_ARCS = {
             'shapes': {'mean': [4], 'std': [4]},
         },
         'merge': {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['mean', 'std'],
             'names': {'feature': 'mean', 'conditioner': 'std'},
         }
@@ -487,7 +487,7 @@ REF_ARCS = {
     'merge_forward_split': {
         'dag_in_shape': {'image': [3, 20, 20], 'vector': [8]},
         'merge': {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['image', 'vector'],
             'names': {'feature': 'image', 'conditioner': 'vector'},
         },
@@ -518,7 +518,7 @@ REF_ARCS = {
             'init': 'kaiming_uniform_',
         },
         'merge': {
-            'type': 'FiLMMerge',
+            'type': 'MergeFiLM',
             'in_names': ['image', 'vector'],
             'names': {'feature': 'image', 'conditioner': 'vector'},
         },

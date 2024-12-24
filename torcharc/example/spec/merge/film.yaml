@@ -10,7 +10,7 @@ modules:
   merge_0_1:
     MergeFiLM:
       feature_dim: 10
-      condition_dim: 4
+      conditioner_dim: 4
   tail:
     Linear:
       in_features: 10
