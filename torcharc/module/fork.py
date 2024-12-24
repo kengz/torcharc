@@ -19,7 +19,10 @@ class ForkSplit(nn.Module):
 
     def __init__(self, split_size_or_sections: int | list[int], dim: int = 1):
         super().__init__()
-        self.split_size_or_sections = split_size_or_sections
+        if isinstance(split_size_or_sections, int):
+            self.split_size_or_sections = split_size_or_sections
+        else:  # Convert list to tensor and register as buffer
+            self.register_buffer('split_size_or_sections', torch.tensor(split_size_or_sections, dtype=torch.long))
         self.dim = dim
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
