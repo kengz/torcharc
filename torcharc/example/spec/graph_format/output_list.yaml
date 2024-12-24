@@ -1,0 +1,23 @@
+modules:
+  head:
+    LazyLinear:
+      out_features: 10
+  fork_0_1:
+    ForkChunk:
+      chunks: 2
+  tail_0:
+    Get:
+      key: 0
+  tail_1:
+    Get:
+      key: 1
+
+graph:
+  input: x
+  modules:
+    head: [x]
+    fork_0_1: [head]
+    tail_0: [fork_0_1]
+    tail_1: [fork_0_1]
+  # use list for multi-output
+  output: [tail_0, tail_1]

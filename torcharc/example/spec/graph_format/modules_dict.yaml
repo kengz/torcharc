@@ -1,0 +1,26 @@
+modules:
+  src_embed:
+    LazyLinear:
+      out_features: 512
+  tgt_embed:
+    LazyLinear:
+      out_features: 512
+  transformer:
+    Transformer:
+      d_model: 512
+      nhead: 8
+  mlp:
+    LazyLinear:
+      out_features: 10
+
+graph:
+  input: [src_x, tgt_x]
+  modules:
+    src_embed: [src_x]
+    tgt_embed: [tgt_x]
+    # use dict for inputs - passed as kwargs to call_module
+    transformer:
+      src: src_embed
+      tgt: tgt_embed
+    mlp: [transformer]
+  output: mlp
