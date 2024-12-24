@@ -16,14 +16,13 @@ modules:
     # rnn output is tuple; get the first element to pass to mlp
     Get:
       key: 0
-  # get last output of RNN by taking last element: output = output[:, -1, :] via fork in dim 1 then flatten
+  # get last output of RNN (batch_size, seq_len, hidden_size) by taking last element: output[:, -1, :]
   # NOTE this is merely for illustration of functionality
-  fork_last:
-    ForkSplit:
-      split_size_or_sections: [27, 1]
-  get_last:
-    Get:
-      key: 1
+  narrow_last:
+    Narrow:
+      dim: 1
+      start: -1
+      length: 1
   flatten_last:
     Flatten:
       start_dim: 1
@@ -49,8 +48,7 @@ graph:
     flatten_seq: [im]
     rnn: [flatten_seq]
     get_output: [rnn]
-    fork_last: [get_output]
-    get_last: [fork_last]
-    flatten_last: [get_last]
+    narrow_last: [get_output]
+    flatten_last: [narrow_last]
     mlp: [flatten_last]
   output: mlp

@@ -11,15 +11,12 @@ modules:
     # rnn output is tuple; get the first element to pass to mlp
     Get:
       key: 0
-  # get last output of RNN by taking last element: output = output[:, -1, :] via fork in dim 1 then flatten
-  # lstm_out = (batch_size, seq_len, hidden_size)
-  # get lstm_out[:,-1]
-  fork_last:
-    ForkSplit:
-      split_size_or_sections: [23, 1]
-  get_last:
-    Get:
-      key: 1
+  # get last output of RNN (batch_size, seq_len, hidden_size) by taking last element: output[:, -1, :]
+  narrow_last:
+    Narrow:
+      dim: 1
+      start: -1
+      length: 1
   mlp:
     Sequential:
       - LazyBatchNorm1d:
@@ -40,7 +37,6 @@ graph:
   modules:
     rnn: [seq]
     get_output: [rnn]
-    fork_last: [get_output]
-    get_last: [fork_last]
-    mlp: [get_last]
+    narrow_last: [get_output]
+    mlp: [narrow_last]
   output: mlp
