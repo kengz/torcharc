@@ -1,0 +1,16 @@
+modules:
+  head:
+    Linear:
+      in_features: 32
+      out_features: 10
+  get_idx:
+    IndexSelect:
+      dim: 1
+      indices: [3, 5, 7]
+
+graph:
+  input: x
+  modules:
+    head: [x]
+    get_idx: [head]
+  output: get_idx
