@@ -12,10 +12,11 @@ class GraphSpec(BaseModel):
         description=" input placeholder nodes of fx.Graph",
         examples=["x", ["x_0, x_1"]],
     )
-    modules: dict[str, list[str] | dict[str, str]] = Field(
+    modules: dict[str, list[str | list[str]] | dict[str, str]] = Field(
         description="fx.Graph nodes and their inputs to use in call_module - where key is node name, and value is args if list or kwargs if dict",
         examples=[
             {"mlp": ["x"]},
+            {"mlp": [["x_0", "x_1"]]},
             {"transformer": {"src": "src_embed", "tgt": "tgt_embed"}},
         ],
     )
@@ -43,15 +44,25 @@ class GraphSpec(BaseModel):
             for name in self.input:
                 _nodes[name] = graph.placeholder(name)
 
+    def map_nodes(self, _nodes: dict, in_nodes: list[str | list[str]]) -> list[fx.Node]:
+        result = []
+        for n in in_nodes:
+            if isinstance(n, list):
+                # Recursively process the list if `n` is a list
+                result.append(self.map_nodes(_nodes, n))
+            else:
+                # Process the single node
+                result.append(_nodes[n])
+        return result
+
     def build_modules(self, graph: fx.Graph, _nodes: dict) -> None:
         for name, in_nodes in self.modules.items():
             node_name, module_name = self.__parse_reuse_name(name)
             if isinstance(in_nodes, list):
-                args = tuple([_nodes[n] for n in in_nodes])
-                _nodes[node_name] = graph.call_module(module_name, args=args)
+                args, kwargs = tuple(self.map_nodes(_nodes, in_nodes)), {}
             else:  # dict
-                kwargs = {k: _nodes[n] for k, n in in_nodes.items()}
-                _nodes[node_name] = graph.call_module(module_name, kwargs=kwargs)
+                args, kwargs = (), {k: _nodes[n] for k, n in in_nodes.items()}
+            _nodes[node_name] = graph.call_module(module_name, args=args, kwargs=kwargs)
 
     def build_output(self, graph: fx.Graph, _nodes: dict) -> None:
         if isinstance(self.output, str):

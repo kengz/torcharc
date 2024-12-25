@@ -15,7 +15,7 @@ class Spec(BaseModel):
         - SequentialSpec: {"Sequential": [NNSpec]} -> torch.nn.Sequential(*[s.build() for s in [NNSpec]])
     - graph: GraphSpec, to define the Graph connections. GraphSpec consists of 3 keys:
         - input: str | list[str] -> input placeholder nodes of fx.Graph, e.g. "x" or ["x_0", "x_1"]
-        - modules: {name: list[str] | dict[str, str]} -> fx.Graph nodes and their inputs to use in call_module - where key is node name, and value is args if list or kwargs if dict, e.g. {"mlp": ["x"]}
+        - modules: {name: str | list[str] | dict[str, str]} -> fx.Graph nodes and their inputs to use in call_module - where key is node name, and value is args if list or kwargs if dict, e.g. {"mlp": "x"} or {"mlp": ["x_0", "x_1"]} or {"transformer": {"src": "src_embed", "tgt": "tgt_embed"}}
         - output: str | list[str] | dict[str, str] -> output of fx.Graph - this can be string (single node), list (tuple), or dict, e.g. "mlp" or ["mlp_0", "mlp_1"] or {"y_0": "mlp_0", "y_1": "mlp_1"}
 
     The build method of this will build modules = {name: nn.Module} and graph = fx.Graph, and return fx.GraphModule(modules, graph).
@@ -41,7 +41,7 @@ class Spec(BaseModel):
     graph:
         input: x
         modules:
-            mlp: [x]
+            mlp: x
         output: mlp
     '''
 
@@ -98,7 +98,7 @@ def build(spec: dict) -> fx.GraphModule:
     graph:
         input: x
         modules:
-            mlp: [x]
+            mlp: x
         output: mlp
     '''
 

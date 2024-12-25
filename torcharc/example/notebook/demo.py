@@ -4,13 +4,21 @@ import yaml
 import torcharc
 
 spec = yaml.safe_load(open("torcharc/example/spec/mlp.yaml"))
+spec = yaml.safe_load(open("torcharc/example/spec/mlp_lazy.yaml"))
 gm = torcharc.build(spec)
 print(gm.code)
 x = torch.randn(1, 128)
 y = gm(x)
 y
 
-spec = yaml.safe_load(open("torcharc/example/spec/mlp_lazy.yaml"))
+
+spec = yaml.safe_load(open("torcharc/example/spec/merge/concat.yaml"))
+gm = torcharc.build(spec)
+print(gm.code)
+x = torch.randn(1, 32)
+y = gm(x, x)
+y
+
 spec = yaml.safe_load(open("torcharc/example/spec/fork/chunk.yaml"))
 spec = yaml.safe_load(open("torcharc/example/spec/fork/split.yaml"))
 gm = torcharc.build(spec)
@@ -20,6 +28,7 @@ y = gm(x)
 y
 
 spec = yaml.safe_load(open("torcharc/example/spec/transformer.yaml"))
+spec = yaml.safe_load(open("torcharc/example/spec/graph_format/modules_list_multi.yaml"))
 gm = torcharc.build(spec)
 batch_size = 4
 seq_len = 10
