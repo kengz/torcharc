@@ -49,6 +49,7 @@ y.shape
 
 spec = yaml.safe_load(open("torcharc/example/spec/film_image_text.yaml"))
 gm = torcharc.build(spec)
+print(gm.code)
 batch_size = 4
 im = torch.randn(batch_size, 3, 64, 64)
 # use random int - assume tokenized and ready to pass to Embedding
