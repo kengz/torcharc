@@ -1,0 +1,51 @@
+# attention for text classifier example
+modules:
+  embedding:
+    Embedding:
+      num_embeddings: 10000
+      embedding_dim: 256
+  # NOTE MultiheadAttention has 2 outputs: output, attn_weights
+  self_attn:
+    MultiheadAttention:
+      embed_dim: 256
+      num_heads: 8
+      batch_first: true
+  self_attn_output:
+    Get:
+      key: 0
+  cross_attn:
+    MultiheadAttention:
+      embed_dim: 256
+      num_heads: 8
+      batch_first: true
+  cross_attn_output:
+    Get:
+      key: 0
+  mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 1024
+      - ReLU:
+      - LazyLinear:
+          out_features: 256
+      - LazyLinear:
+          out_features: 10000
+
+graph:
+  input: [source, target]
+  modules:
+    # reuse
+    embedding~source: [source]
+    embedding~target: [target]
+    self_attn:
+      query: embedding~source
+      key: embedding~source
+      value: embedding~source
+    self_attn_output: [self_attn]
+    cross_attn:
+      query: embedding~target
+      key: self_attn_output
+      value: self_attn_output
+    cross_attn_output: [cross_attn]
+    mlp: [cross_attn_output]
+  output: mlp

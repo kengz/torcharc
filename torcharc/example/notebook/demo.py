@@ -70,3 +70,33 @@ batch_size = 4
 im = torch.randn(batch_size, 3, 64, 64)
 y = gm(left_image=im, right_image=im)
 y.shape
+
+
+spec = yaml.safe_load(open("torcharc/example/spec/transformer/transformer.yaml"))
+gm = torcharc.build(spec)
+print(gm.code)
+x = torch.randn(1, 32)
+y = gm(x, x)
+y.shape
+
+spec = yaml.safe_load(open("torcharc/example/spec/transformer/text_summarization.yaml"))
+gm = torcharc.build(spec)
+print(gm.code)
+vocab_size, embed_dim, num_heads = 10000, 256, 8
+source = torch.randint(0, vocab_size, (1, 100))  # 100 source tokens
+target = torch.randint(0, vocab_size, (1, 20))   # 20 target tokens
+
+y = gm(source, target)
+y.shape
+
+
+spec = yaml.safe_load(open("torcharc/example/spec/transformer/text_classifier.yaml"))
+gm = torcharc.build(spec)
+print(gm.code)
+vocab_size, embed_dim, num_heads = 10000, 256, 8
+source = torch.randint(0, vocab_size, (1, 100))  # 100 source tokens
+
+
+y = gm(source)
+y.shape
+

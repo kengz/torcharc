@@ -5,12 +5,13 @@ modules:
   tgt_embed:
     LazyLinear:
       out_features: 64
-  attention:
+  attn:
     MultiheadAttention:
       embed_dim: 64
       num_heads: 4
-  get_attn:
-    # attention output is tuple; get the first element to pass to mlp
+      batch_first: True
+  attn_output:
+    # attn output is tuple; get the first element to pass to mlp
     Get:
       key: 0
   mlp:
@@ -22,10 +23,10 @@ graph:
   modules:
     src_embed: [src_x]
     tgt_embed: [tgt_x]
-    attention:
+    attn:
       query: src_embed
       key: tgt_embed
       value: tgt_embed
-    get_attn: [attention]
-    mlp: [get_attn]
+    attn_output: [attn]
+    mlp: [attn_output]
   output: mlp

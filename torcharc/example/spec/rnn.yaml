@@ -7,12 +7,12 @@ modules:
       num_layers: 1
       batch_first: true
       dropout: 0.2
-  get_output:
+  rnn_output:
     # rnn output is tuple; get the first element to pass to mlp
     Get:
       key: 0
   # use torch.narrow to get the last seq element of RNN (batch_size, seq_len, hidden_size) - output[:, -1, :]
-  get_seq_last:
+  rnn_seq_last:
     Narrow:
       dim: 1
       start: -1
@@ -36,7 +36,7 @@ graph:
   input: seq
   modules:
     rnn: [seq]
-    get_output: [rnn]
-    get_seq_last: [get_output]
-    mlp: [get_seq_last]
+    rnn_output: [rnn]
+    rnn_seq_last: [rnn_output]
+    mlp: [rnn_seq_last]
   output: mlp

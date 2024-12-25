@@ -13,6 +13,7 @@ modules:
       num_decoder_layers: 6
       dim_feedforward: 2048
       dropout: 0.1
+      batch_first: true
   mlp:
     LazyLinear:
       out_features: 10
