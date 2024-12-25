@@ -51,8 +51,8 @@ class MergeMean(MergeDim):
 class MergeDot(nn.Module):
     """Merge module using dot-product, e.g. similarity matrix for CLIP"""
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return torch.matmul(x, y.T)
+    def forward(self, input: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
+        return torch.matmul(input, other.T)
 
 
 class MergeFiLM(nn.Module):

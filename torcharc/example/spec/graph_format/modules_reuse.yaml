@@ -1,6 +1,4 @@
-# stereoscopic vision conv classifier
 modules:
-  # single conv shared for left and right
   conv:
     Sequential:
       - LazyConv2d:
@@ -17,7 +15,6 @@ modules:
           p: 0.25
       - Flatten:
 
-  # separate identical mlp for left and right for processing
   left_mlp: &left_mlp
     Sequential:
       - LazyLinear:
@@ -29,11 +26,9 @@ modules:
   right_mlp:
     <<: *left_mlp
 
-  # merge left and right with dot product for stereo vision
   stereo_merge:
     MergeDot:
 
-  # classify with mlp
   mlp:
     Sequential:
       - LazyLinear:
@@ -47,7 +42,7 @@ modules:
 graph:
   input: [left_image, right_image]
   modules:
-    # reuse syntax: <module>~<suffix>
+    # reuse syntax: <module>~<suffix>. conv is shared for left_image and right_image
     conv~left: [left_image]
     conv~right: [right_image]
     left_mlp: [conv~left]

@@ -31,7 +31,9 @@ class GraphSpec(BaseModel):
         Parse reuse names like `conv~left` (`conv` reused with inputs `left`) into `conv~left` for node name and `conv` for module_name, e.g. for conv~left, conv~right for stereoscopic model
         """
         if "~" in name:
-            return name.split("~")
+            module_name, _ = name.split(self._reuse_delim)
+            node_name = name
+            return node_name, module_name
         return name, name
 
     def build_input(self, graph: fx.Graph, _nodes: dict) -> None:

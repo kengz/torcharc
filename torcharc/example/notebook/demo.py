@@ -52,3 +52,11 @@ gm.print_readable()
 cgm = torch.compile(gm)
 y = cgm(image=im, text=text)
 y.shape
+
+
+spec = yaml.safe_load(open("torcharc/example/spec/stereo_conv.yaml"))
+gm = torcharc.build(spec)
+batch_size = 4
+im = torch.randn(batch_size, 3, 64, 64)
+y = gm(left_image=im, right_image=im)
+y.shape
