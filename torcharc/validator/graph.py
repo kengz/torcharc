@@ -24,6 +24,16 @@ class GraphSpec(BaseModel):
         examples=["mlp", ["mlp_0", "mlp_1"], {"y_0": "mlp_0", "y_1": "mlp_1"}],
     )
 
+    _reuse_delim: str = "~"  # delimiter for reusing modules with different inputs
+
+    def __parse_reuse_name(self, name: str) -> tuple[str, str]:
+        """
+        Parse reuse names like `conv~left` (`conv` reused with inputs `left`) into `conv~left` for node name and `conv` for module_name, e.g. for conv~left, conv~right for stereoscopic model
+        """
+        if "~" in name:
+            return name.split("~")
+        return name, name
+
     def build_input(self, graph: fx.Graph, _nodes: dict) -> None:
         if isinstance(self.input, str):
             _nodes[self.input] = graph.placeholder(self.input)
@@ -33,12 +43,13 @@ class GraphSpec(BaseModel):
 
     def build_modules(self, graph: fx.Graph, _nodes: dict) -> None:
         for name, in_nodes in self.modules.items():
+            node_name, module_name = self.__parse_reuse_name(name)
             if isinstance(in_nodes, list):
-                args = tuple([_nodes[name] for name in in_nodes])
-                _nodes[name] = graph.call_module(name, args=args)
+                args = tuple([_nodes[n] for n in in_nodes])
+                _nodes[node_name] = graph.call_module(module_name, args=args)
             else:  # dict
-                kwargs = {k: _nodes[name] for k, name in in_nodes.items()}
-                _nodes[name] = graph.call_module(name, kwargs=kwargs)
+                kwargs = {k: _nodes[n] for k, n in in_nodes.items()}
+                _nodes[node_name] = graph.call_module(module_name, kwargs=kwargs)
 
     def build_output(self, graph: fx.Graph, _nodes: dict) -> None:
         if isinstance(self.output, str):

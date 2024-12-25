@@ -1,7 +1,7 @@
-# stereoscopic vision conv2d classifier
+# stereoscopic vision conv classifier
 modules:
-  # single conv2d shared for left and right
-  conv2d:
+  # single conv shared for left and right
+  conv:
     Sequential:
       - LazyConv2d:
           out_channels: 32
@@ -44,6 +44,7 @@ modules:
 graph:
   input: [left_im, right_im]
   modules:
-    conv2d: [left_im]
+    conv~left: [left_im]
+    conv~right: [right_im]
     # TODO gap: reuse
-  output: conv2d
+  output: conv

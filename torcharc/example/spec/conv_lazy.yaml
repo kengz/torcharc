@@ -1,7 +1,7 @@
 # MNIST Conv2d model example from PyTorch https://github.com/pytorch/examples/blob/main/mnist/main.py
 # NOTE lazy modules is recommended for ease https://pytorch.org/docs/stable/generated/torch.nn.LazyConv2d.html
 modules:
-  conv2d:
+  conv:
     Sequential:
       - LazyConv2d:
           out_channels: 32
@@ -29,5 +29,5 @@ modules:
 graph:
   input: image
   modules:
-    conv2d: [image]
-  output: conv2d
+    conv: [image]
+  output: conv
