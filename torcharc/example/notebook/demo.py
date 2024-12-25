@@ -96,7 +96,21 @@ print(gm.code)
 vocab_size, embed_dim, num_heads = 10000, 256, 8
 source = torch.randint(0, vocab_size, (1, 100))  # 100 source tokens
 
-
 y = gm(source)
+y.shape
+
+
+spec = yaml.safe_load(open("torcharc/example/spec/advanced/dlrm_sum.yaml"))
+spec = yaml.safe_load(open("torcharc/example/spec/advanced/dlrm_attn.yaml"))
+gm = torcharc.build(spec)
+print(gm.code)
+
+batch_size = 4
+dense = torch.randn(batch_size, 256)
+cat_0 = torch.randint(0, 1000, (batch_size,))
+cat_1 = torch.randint(0, 1000, (batch_size,))
+cat_2 = torch.randint(0, 1000, (batch_size,))
+cat_2.shape
+y = gm(dense, cat_0, cat_1, cat_2)
 y.shape
 
