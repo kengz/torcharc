@@ -2,11 +2,13 @@ modules:
   text_token_embed:
     Embedding:
       num_embeddings: 10000
-      embedding_dim: 256
+      embedding_dim: 128
   text_tfmr:
     Transformer:
-      d_model: 256
+      d_model: 128
       nhead: 8
+      num_encoder_layers: 2
+      num_decoder_layers: 2
       dropout: 0.1
   text_embed:
     # sentence embedding has shape [batch_size, seq_len, embed_dim],
