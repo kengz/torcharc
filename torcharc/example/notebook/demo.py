@@ -19,10 +19,16 @@ compiled_model(x)
 assert compiled_model(x).shape == (1, 10)
 
 
+spec = yaml.safe_load(open("torcharc/example/spec/conv.yaml"))
+model = torcharc.build(spec)
+x = torch.randn(1, 3, 32, 32)
+y = model(x)
+assert y.shape == (1, 10)
+
 
 spec = yaml.safe_load(open("torcharc/example/spec/rnn.yaml"))
 model = torcharc.build(spec)
-x = torch.randn(1, 10, 7)
+x = torch.randn(4, 10, 7)
 y = model(x)
 y.shape
 assert y.shape == (1, 10)

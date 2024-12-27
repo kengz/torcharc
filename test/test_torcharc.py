@@ -43,3 +43,26 @@ def test_basic_model(spec_file, input_shape, output_shape):
     # Test compatibility with torch.compile
     compiled_model = torch.compile(model)
     assert compiled_model(x).shape == output_shape
+
+
+@pytest.mark.parametrize(
+    "spec_file, input_shape, output_shape",
+    [
+        # RNN input is (batch, seq_len, input_size)
+        (SPEC_DIR / "rnn.yaml", (B, 10, 7), (B, 10)),
+    ],
+)
+def test_rnn(spec_file, input_shape, output_shape):
+    # Load the model specification from the YAML file
+    with open(spec_file, "r") as f:
+        spec = yaml.safe_load(f)
+
+    # Build the model using torcharc
+    model = torcharc.build(spec)
+
+    # Generate input tensor with the given shape
+    x = torch.randn(*input_shape)
+
+    # Run the model and check the output shape
+    y = model(x)
+    assert y.shape == output_shape

@@ -23,6 +23,7 @@ modules:
       dim: 1
       start: -1
       length: 1
+  # reduce (batch, 1, hidden_size) to (batch, hidden_size)
   flatten_last:
     Flatten:
       start_dim: 1
