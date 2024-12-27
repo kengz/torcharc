@@ -16,7 +16,7 @@ B = 4  # batch size
         (SPEC_DIR / "basic" / "conv_lazy.yaml", (B, 3, 32, 32), (B, 10)),
     ],
 )
-def test_basic_model(spec_file, input_shape, output_shape):
+def test_model(spec_file, input_shape, output_shape):
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
