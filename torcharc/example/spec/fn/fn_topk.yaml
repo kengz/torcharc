@@ -1,5 +1,3 @@
-# MNIST MLP model example from PyTorch https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
-# NOTE this is merely for illustration of functionality; MLP is not practical for MNIST
 modules:
   mlp:
     Sequential:
@@ -12,8 +10,10 @@ modules:
       - ReLU:
       - LazyLinear:
           out_features: 10
-      - LogSoftmax:
-          dim: 1
+      # use generic torch function with caveat of incompatible with JIT script
+      - TorchFn:
+          name: topk
+          k: 3
 
 graph:
   input: x

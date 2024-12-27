@@ -4,8 +4,6 @@ modules:
   flatten_seq:
     # take (batch, 1, 28, 28) and return (batch, 28, 28)
     Flatten:
-      start_dim: 0
-      end_dim: 1
   rnn:
     LSTM:
       input_size: 28
@@ -26,8 +24,6 @@ modules:
   # reduce (batch, 1, hidden_size) to (batch, hidden_size)
   flatten_last:
     Flatten:
-      start_dim: 1
-      end_dim: 2
   mlp:
     Sequential:
       - LazyBatchNorm1d:

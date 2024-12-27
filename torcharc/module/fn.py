@@ -5,7 +5,7 @@ from torch import nn
 class Reduce(nn.Module):
     """
     Call torch reduction ops https://pytorch.org/docs/stable/torch.html#reduction-ops with common arguments `dim` and `keepdim` (so, applicable to any torch function)
-    Uses static arguments instead of dynamic *args and **kwargs to preserve compatibility with JIT script and trace for performance
+    This is compatible with torch compile, JIT script and JIT trace by using static arguments for performance instead of dynamic *args and **kwargs
     """
 
     def __init__(self, name: str, dim: int | list[int] | None, keepdim: bool = False):

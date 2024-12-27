@@ -33,6 +33,14 @@ y = model(x)
 y.shape
 assert y.shape == (1, 10)
 
+
+spec = yaml.safe_load(open("torcharc/example/spec/fn/fn_topk.yaml"))
+model = torcharc.build(spec)
+x = torch.randn(1, 128)
+y = model(x)
+compiled_model = torch.compile(model)
+compiled_model(x)
+
 spec = yaml.safe_load(open("torcharc/example/spec/merge/concat.yaml"))
 model = torcharc.build(spec)
 print(model.code)
