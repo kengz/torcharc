@@ -4,7 +4,7 @@ modules:
   conv:
     Sequential:
       - Conv2d:
-          in_channels: 1
+          in_channels: 3
           out_channels: 32
           kernel_size: 3
       - ReLU:
@@ -18,8 +18,7 @@ modules:
       - Dropout:
           p: 0.25
       - Flatten:
-      - Linear:
-          in_features: 9216
+      - LazyLinear:
           out_features: 128
       - ReLU:
       - Dropout:

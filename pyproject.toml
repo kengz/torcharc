@@ -32,6 +32,7 @@ torchvision = [
 dev = [
     "ipykernel>=6.29.5",
     "lightning>=2.5.0.post0",
+    "pytest-xdist>=3.6.1",
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
     "ruff>=0.8.3",
@@ -43,6 +44,7 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = [
+    "-n 4",
     "--cov=torcharc",
     "--cov-report=html",
     "--cov-report=term",

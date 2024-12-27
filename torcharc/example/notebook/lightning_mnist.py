@@ -45,9 +45,11 @@ class MNISTClassifier(L.LightningModule):
         super().__init__()
         spec = yaml.safe_load(open(model_spec_path))
         self.model = torcharc.build(spec)
+        # NOTE optimize with torch.compile https://pytorch.org/docs/2.5/generated/torch.compile.html
+        self.model = torch.compile(self.model)
         self.lr = 1e-3
         self.accuracy = Accuracy(task="multiclass", num_classes=10, top_k=1)
-        # set this for log_graph and reporting params
+        # NOTE set this for log_graph and reporting params
         self.example_input_array = torch.rand(1, 1, 28, 28)
 
     def forward(self, x):
