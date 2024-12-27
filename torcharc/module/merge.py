@@ -67,5 +67,19 @@ class MergeFiLM(nn.Module):
         self.gamma = nn.Linear(conditioner_dim, feature_dim)
         self.beta = nn.Linear(conditioner_dim, feature_dim)
 
+    def reshape_cond(self, feat: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+        """
+        Give a feature tensor, reshape the conditioning tensor to match its dim
+        e.g. reshape cond (4, 32) to match feat (4, 32, 64, 64) -> (4, 32, 1, 1)
+        This is TorchScript-compatible
+        """
+        if cond.dim() == feat.dim():
+            return cond
+        # Get the target shape for broadcasting
+        target_shape = cond.shape + (1,) * (feat.dim() - cond.dim())
+        # Reshape cond to match the broadcast shape
+        return cond.reshape(target_shape)
+
     def forward(self, feature: torch.Tensor, conditioner: torch.Tensor) -> torch.Tensor:
-        return self.gamma(conditioner) * feature + self.beta(conditioner)
+        cond_gamma, cond_beta = self.gamma(conditioner), self.beta(conditioner)
+        return self.reshape_cond(feature, cond_gamma) * feature + self.reshape_cond(feature, cond_beta)

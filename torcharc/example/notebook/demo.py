@@ -114,3 +114,13 @@ cat_2.shape
 y = gm(dense, cat_0, cat_1, cat_2)
 y.shape
 
+
+spec = yaml.safe_load(open("torcharc/example/spec/advanced/film_image_state.yaml"))
+gm = torcharc.build(spec)
+batch_size = 4
+image = torch.randn(batch_size, 3, 64, 64)
+state = torch.randn(batch_size, 4)
+y = gm(image, state)
+
+sgm = torch.jit.script(gm)
+result = sgm(image, state)
