@@ -1,12 +1,10 @@
 # FiLM https://distill.pub/2018/feature-wise-transformations/
 modules:
   feat:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   cond:
-    Linear:
-      in_features: 16
+    LazyLinear:
       out_features: 4
   merge_0_1:
     MergeFiLM:

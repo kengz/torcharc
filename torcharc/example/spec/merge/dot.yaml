@@ -1,11 +1,9 @@
 modules:
   head_0:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   head_1:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   merge_0_1:
     MergeDot:
@@ -19,7 +17,7 @@ graph:
   modules:
     head_0: [x_0]
     head_1: [x_1]
-    # merge uses list of tensors as inputs, so args = ([head_0, head_1],)
-    merge_0_1: [[head_0, head_1]]
-    tail: [merge_0_1]
-  output: tail
+    # dot (matmul) takes in (input, other)
+    merge_0_1: [head_0, head_1]
+    # tail: [merge_0_1]
+  output: merge_0_1

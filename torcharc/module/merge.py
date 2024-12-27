@@ -51,8 +51,15 @@ class MergeMean(MergeDim):
 class MergeDot(nn.Module):
     """Merge module using dot-product, e.g. similarity matrix for CLIP"""
 
-    def forward(self, input: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
-        return torch.matmul(input, other.T)
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.linalg.vecdot(x, y)
+
+
+class MergeBMM(nn.Module):
+    """Merge module using batch matrix-matrix product"""
+
+    def forward(self, input: torch.Tensor, mat2: torch.Tensor) -> torch.Tensor:
+        return torch.bmm(input, mat2)
 
 
 class MergeFiLM(nn.Module):
@@ -82,4 +89,6 @@ class MergeFiLM(nn.Module):
 
     def forward(self, feature: torch.Tensor, conditioner: torch.Tensor) -> torch.Tensor:
         cond_gamma, cond_beta = self.gamma(conditioner), self.beta(conditioner)
-        return self.reshape_cond(feature, cond_gamma) * feature + self.reshape_cond(feature, cond_beta)
+        return self.reshape_cond(feature, cond_gamma) * feature + self.reshape_cond(
+            feature, cond_beta
+        )

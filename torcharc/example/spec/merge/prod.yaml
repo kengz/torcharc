@@ -1,11 +1,9 @@
 modules:
   head_0:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   head_1:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   merge_0_1:
     MergeProd:

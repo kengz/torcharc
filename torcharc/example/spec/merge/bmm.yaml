@@ -1,0 +1,12 @@
+# Batch matrix-matric product https://pytorch.org/docs/stable/generated/torch.bmm.html
+modules:
+  merge_0_1:
+    MergeBMM:
+
+graph:
+  # matrix input for bmm
+  input: [m_0, m_1]
+  modules:
+    # dot (matmul) takes in (input, other)
+    merge_0_1: [m_0, m_1]
+  output: merge_0_1
