@@ -68,6 +68,12 @@ tgt_x = torch.randn(seq_len, batch_size, 10)
 y = model(src_x=src_x, tgt_x=tgt_x)
 y.shape
 
+spec = yaml.safe_load(open("torcharc/example/spec/graph_format/modules_reuse.yaml"))
+model = torcharc.build(spec)
+left_image = right_image = torch.randn(4, 3, 32, 32)
+model(left_image=left_image, right_image=right_image).shape
+
+
 spec = yaml.safe_load(open("torcharc/example/spec/attention.yaml"))
 model = torcharc.build(spec)
 batch_size = 4
@@ -103,6 +109,14 @@ y = model(left_image=im, right_image=im)
 y.shape
 
 
+spec = yaml.safe_load(open("torcharc/example/spec/transformer/attn.yaml"))
+model = torcharc.build(spec)
+print(model.code)
+x = torch.randn(4, 10, 64)
+x1 = torch.randn(4, 10, 64)
+y = model(x, x)
+y.shape
+
 spec = yaml.safe_load(open("torcharc/example/spec/transformer/transformer.yaml"))
 model = torcharc.build(spec)
 print(model.code)
@@ -110,7 +124,7 @@ x = torch.randn(1, 32)
 y = model(x, x)
 y.shape
 
-spec = yaml.safe_load(open("torcharc/example/spec/transformer/text_summarization.yaml"))
+spec = yaml.safe_load(open("torcharc/example/spec/transformer/text_summarizer.yaml"))
 model = torcharc.build(spec)
 print(model.code)
 vocab_size, embed_dim, num_heads = 10000, 256, 8
