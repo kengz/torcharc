@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from torch import fx
+import yaml
+from pathlib import Path
 
 from torcharc.validator.graph import GraphSpec
 from torcharc.validator.modules import ModuleSpec
@@ -75,9 +77,9 @@ class Spec(BaseModel):
         return gm
 
 
-def build(spec: dict) -> fx.GraphModule:
+def build(spec: dict | str) -> fx.GraphModule:
     """
-    Build fx.GraphModule from a spec dict, e.g.
+    Build fx.GraphModule from a spec dict or path to a spec dict, e.g.
 
     import torch
     import yaml
@@ -120,4 +122,7 @@ def build(spec: dict) -> fx.GraphModule:
     # tensor([[-0.3924,  0.0313,  0.2628, -0.2336,  0.5610, -0.1078, -0.1165,  0.1895,
     #           0.2207,  0.1977]], grad_fn=<AddmmBackward0>)
     """
+    if not isinstance(spec, dict):
+        with Path(spec).open("r") as f:
+            spec = yaml.safe_load(f)
     return Spec(**spec).build()
