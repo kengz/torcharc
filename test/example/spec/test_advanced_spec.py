@@ -10,13 +10,13 @@ B = 4  # batch size
 @pytest.mark.parametrize(
     "spec_file",
     [
-        SPEC_DIR / "advanced" / "dlrm_attn.yaml",
-        SPEC_DIR / "advanced" / "dlrm_sum.yaml",
+        "dlrm_attn.yaml",
+        "dlrm_sum.yaml",
     ],
 )
 def test_dlrm(spec_file):
     # Build the model using torcharc
-    model = torcharc.build(spec_file)
+    model = torcharc.build(SPEC_DIR / "advanced" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

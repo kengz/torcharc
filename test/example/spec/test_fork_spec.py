@@ -10,13 +10,13 @@ B = 4  # batch size
 @pytest.mark.parametrize(
     "spec_file, input_shape",
     [
-        (SPEC_DIR / "fork" / "chunk.yaml", (B, 32)),
-        (SPEC_DIR / "fork" / "split.yaml", (B, 32)),
+        ("chunk.yaml", (B, 32)),
+        ("split.yaml", (B, 32)),
     ],
 )
 def test_fork(spec_file, input_shape):
     # Build the model using torcharc
-    model = torcharc.build(spec_file)
+    model = torcharc.build(SPEC_DIR / "fork" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

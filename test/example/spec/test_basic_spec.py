@@ -10,15 +10,15 @@ B = 4  # batch size
 @pytest.mark.parametrize(
     "spec_file, input_shape, output_shape",
     [
-        (SPEC_DIR / "basic" / "mlp.yaml", (B, 128), (B, 10)),
-        (SPEC_DIR / "basic" / "mlp_lazy.yaml", (B, 128), (B, 10)),
-        (SPEC_DIR / "basic" / "conv.yaml", (B, 3, 32, 32), (B, 10)),
-        (SPEC_DIR / "basic" / "conv_lazy.yaml", (B, 3, 32, 32), (B, 10)),
+        ("mlp.yaml", (B, 128), (B, 10)),
+        ("mlp_lazy.yaml", (B, 128), (B, 10)),
+        ("conv.yaml", (B, 3, 32, 32), (B, 10)),
+        ("conv_lazy.yaml", (B, 3, 32, 32), (B, 10)),
     ],
 )
 def test_model(spec_file, input_shape, output_shape):
     # Build the model using torcharc
-    model = torcharc.build(spec_file)
+    model = torcharc.build(SPEC_DIR / "basic" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -39,12 +39,12 @@ def test_model(spec_file, input_shape, output_shape):
     "spec_file, input_shape, output_shape",
     [
         # RNN input is (batch, seq_len, input_size)
-        (SPEC_DIR / "basic" / "rnn.yaml", (B, 10, 7), (B, 10)),
+        ("rnn.yaml", (B, 10, 7), (B, 10)),
     ],
 )
 def test_rnn(spec_file, input_shape, output_shape):
     # Build the model using torcharc
-    model = torcharc.build(spec_file)
+    model = torcharc.build(SPEC_DIR / "basic" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

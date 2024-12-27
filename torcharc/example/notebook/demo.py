@@ -38,13 +38,15 @@ spec = yaml.safe_load(open("torcharc/example/spec/fn/fn_topk.yaml"))
 model = torcharc.build(spec)
 x = torch.randn(1, 128)
 y = model(x)
+y.indices
 compiled_model = torch.compile(model)
 compiled_model(x)
 
 spec = yaml.safe_load(open("torcharc/example/spec/merge/concat.yaml"))
+spec = yaml.safe_load(open("torcharc/example/spec/merge/dot.yaml"))
 model = torcharc.build(spec)
 print(model.code)
-x = torch.randn(1, 32)
+x = torch.randn(8, 32)
 y = model(x, x)
 y
 

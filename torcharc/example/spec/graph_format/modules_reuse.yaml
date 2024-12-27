@@ -27,7 +27,7 @@ modules:
     <<: *left_mlp
 
   stereo_merge:
-    MergeDot:
+    MergeProd:
 
   mlp:
     Sequential:
@@ -47,6 +47,6 @@ graph:
     conv~right: [right_image]
     left_mlp: [conv~left]
     right_mlp: [conv~right]
-    stereo_merge: [left_mlp, right_mlp]
+    stereo_merge: [[left_mlp, right_mlp]]
     mlp: [stereo_merge]
   output: mlp
