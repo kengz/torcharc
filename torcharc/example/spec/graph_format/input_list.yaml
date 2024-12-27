@@ -17,6 +17,6 @@ graph:
   modules:
     head_0: [x_0]
     head_1: [x_1]
-    merge_0_1: [head_0, head_1]
+    merge_0_1: [[head_0, head_1]]
     tail: [merge_0_1]
   output: tail
