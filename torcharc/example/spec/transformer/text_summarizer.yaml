@@ -1,4 +1,4 @@
-# attention for text classifier example
+# attention for text summarizer example
 modules:
   embedding:
     Embedding:
@@ -32,18 +32,18 @@ modules:
           out_features: 10000
 
 graph:
-  input: [source, target]
+  input: [src, tgt]
   modules:
     # reuse
-    embedding~source: [source]
-    embedding~target: [target]
+    embedding~src: [src]
+    embedding~tgt: [tgt]
     self_attn:
-      query: embedding~source
-      key: embedding~source
-      value: embedding~source
+      query: embedding~src
+      key: embedding~src
+      value: embedding~src
     self_attn_output: [self_attn]
     cross_attn:
-      query: embedding~target
+      query: embedding~tgt
       key: self_attn_output
       value: self_attn_output
     cross_attn_output: [cross_attn]
