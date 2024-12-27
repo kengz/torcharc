@@ -30,7 +30,7 @@ class Narrow(nn.Module):
         self.length = length
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.narrow(x, self.dim, self.start, self.length)
+        return torch.narrow(x, dim=self.dim, start=self.start, length=self.length)
 
 
 class IndexSelect(nn.Module):
@@ -42,11 +42,11 @@ class IndexSelect(nn.Module):
     hint: use Flatten() after slicing to squeeze dimension
     """
 
-    def __init__(self, dim: int, indices: list[int]):
+    def __init__(self, dim: int, index: list[int]):
         super().__init__()
         self.dim = dim
         # Convert list to tensor and register as buffer
-        self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
+        self.register_buffer("index", torch.tensor(index, dtype=torch.long))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.index_select(x, self.dim, self.indices)
+        return torch.index_select(x, dim=self.dim, index=self.index)

@@ -6,7 +6,7 @@ modules:
   get_idx:
     IndexSelect:
       dim: 1
-      indices: [3, 5, 7]
+      index: [3, 5, 7]
 
 graph:
   input: x
