@@ -17,6 +17,9 @@ modules:
       dim: 1
       start: -1
       length: 1
+  # reduce (batch, 1, hidden_size) to (batch, hidden_size)
+  flatten_last:
+    Flatten:
   mlp:
     Sequential:
       - LazyBatchNorm1d:
@@ -38,5 +41,6 @@ graph:
     rnn: [seq]
     rnn_output: [rnn]
     rnn_seq_last: [rnn_output]
-    mlp: [rnn_seq_last]
+    flatten_last: [rnn_seq_last]
+    mlp: [flatten_last]
   output: mlp

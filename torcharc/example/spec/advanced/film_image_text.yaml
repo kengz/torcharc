@@ -16,16 +16,18 @@ modules:
           p: 0.25
       - Flatten:
       - LazyLinear:
-          out_features: 512
+          out_features: 256
 
   text_token_embed:
     Embedding:
       num_embeddings: 10000
-      embedding_dim: 256
+      embedding_dim: 128
   text_tfmr:
     Transformer:
-      d_model: 256
+      d_model: 128
       nhead: 8
+      num_encoder_layers: 2
+      num_decoder_layers: 2
       dropout: 0.1
   text_embed:
     # pooling over the token embeddings
@@ -36,9 +38,9 @@ modules:
   merge_film:
     MergeFiLM:
       # image embedding (conv output)
-      feature_dim: 512
+      feature_dim: 256
       # text embedding (text_tfmr output)
-      conditioner_dim: 256
+      conditioner_dim: 128
 
   classifier:
     Sequential:

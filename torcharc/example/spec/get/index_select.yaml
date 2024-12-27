@@ -1,7 +1,6 @@
 modules:
   head:
-    Linear:
-      in_features: 32
+    LazyLinear:
       out_features: 10
   get_idx:
     IndexSelect:

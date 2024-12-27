@@ -3,11 +3,11 @@ modules:
   embedding:
     Embedding:
       num_embeddings: 10000
-      embedding_dim: 256
+      embedding_dim: 128
   # NOTE MultiheadAttention has 2 outputs: output, attn_weights
   attn:
     MultiheadAttention:
-      embed_dim: 256
+      embed_dim: 128
       num_heads: 8
       batch_first: true
   self_attn_output:
@@ -21,7 +21,7 @@ modules:
   mlp:
     Sequential:
       - LazyLinear:
-          out_features: 256
+          out_features: 64
       - LazyLinear:
           out_features: 10
 

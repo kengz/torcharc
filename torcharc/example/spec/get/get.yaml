@@ -1,32 +1,22 @@
 modules:
-  src_embed:
-    LazyLinear:
-      out_features: 64
-  tgt_embed:
-    LazyLinear:
-      out_features: 64
-  attn:
-    MultiheadAttention:
-      embed_dim: 64
-      num_heads: 4
-      batch_first: True
-  attn_output:
-    # attn output is tuple; get the first element to pass to mlp
-    Get:
-      key: 0
-  mlp:
+  head:
     LazyLinear:
       out_features: 10
+  fork_0_1:
+    ForkChunk:
+      chunks: 2
+  tail_0:
+    Get:
+      key: 0
+  tail_1:
+    Get:
+      key: 1
 
 graph:
-  input: [src_x, tgt_x]
+  input: x
   modules:
-    src_embed: [src_x]
-    tgt_embed: [tgt_x]
-    attn:
-      query: src_embed
-      key: tgt_embed
-      value: tgt_embed
-    attn_output: [attn]
-    mlp: [attn_output]
-  output: mlp
+    head: [x]
+    fork_0_1: [head]
+    tail_0: [fork_0_1]
+    tail_1: [fork_0_1]
+  output: [tail_0, tail_1]
