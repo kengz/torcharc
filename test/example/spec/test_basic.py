@@ -26,17 +26,13 @@ def test_model(spec_file, input_shape, output_shape):
     y = model(x)
     assert y.shape == output_shape
 
-    # Test compatibility with JIT script
-    scripted_model = torch.jit.script(model)
-    assert scripted_model(x).shape == output_shape
-
-    # Test compatibility with JIT trace
-    traced_model = torch.jit.trace(model, (x,))
-    assert traced_model(x).shape == output_shape
-
-    # Test compatibility with torch.compile
+    # Test compatibility with compile, script and trace
     compiled_model = torch.compile(model)
-    assert compiled_model(x).shape == output_shape
+    assert compiled_model(x).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model(x).shape == y.shape
+    traced_model = torch.jit.trace(model, (x))
+    assert traced_model(x).shape == y.shape
 
 
 @pytest.mark.parametrize(
@@ -56,6 +52,6 @@ def test_rnn(spec_file, input_shape, output_shape):
     y = model(x)
     assert y.shape == output_shape
 
-    # Test compatibility with torch.compile
+    # Test compatibility with compile
     compiled_model = torch.compile(model)
-    assert compiled_model(x).shape == output_shape
+    assert compiled_model(x).shape == y.shape

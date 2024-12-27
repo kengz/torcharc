@@ -80,7 +80,7 @@ spec = yaml.safe_load(open("torcharc/example/spec/film_image_text.yaml"))
 model = torcharc.build(spec)
 print(model.code)
 batch_size = 4
-im = torch.randn(batch_size, 3, 64, 64)
+im = torch.randn(batch_size, 3, 32, 32)
 # use random int - assume tokenized and ready to pass to Embedding
 text = torch.randint(0, 1000, (batch_size, 10))
 y = model(image=im, text=text)
@@ -96,7 +96,7 @@ y.shape
 spec = yaml.safe_load(open("torcharc/example/spec/stereo_conv.yaml"))
 model = torcharc.build(spec)
 batch_size = 4
-im = torch.randn(batch_size, 3, 64, 64)
+im = torch.randn(batch_size, 3, 32, 32)
 y = model(left_image=im, right_image=im)
 y.shape
 
@@ -142,12 +142,13 @@ cat_2 = torch.randint(0, 1000, (batch_size,))
 cat_2.shape
 y = model(dense, cat_0, cat_1, cat_2)
 y.shape
+scripted_model = torch.jit.script(model)
 
 
 spec = yaml.safe_load(open("torcharc/example/spec/advanced/film_image_state.yaml"))
 model = torcharc.build(spec)
 batch_size = 4
-image = torch.randn(batch_size, 3, 64, 64)
+image = torch.randn(batch_size, 3, 32, 32)
 state = torch.randn(batch_size, 4)
 y = model(image, state)
 

@@ -18,23 +18,23 @@ modules:
       - Dropout:
           p: 0.25
 
-  # e.g. gyroscopic information as state
+  # prioprioception state, e.g. gyroscopic information
   gyro:
     LazyLinear:
       out_features: 10
 
-  film_0: # FiLM for conv_0 and gyro
+  film_0: # FiLM for conv_0 and state
     MergeFiLM:
       # image feature (conv channels)
       feature_dim: 32
-      # gyro condition (state)
+      # state condition
       conditioner_dim: 10
 
-  film_1: # FiLM for conv_0 and gyro
+  film_1: # FiLM for conv_0 and state
     MergeFiLM:
       # image feature (conv channels)
       feature_dim: 64
-      # gyro condition (state)
+      # state condition
       conditioner_dim: 10
 
   flatten:

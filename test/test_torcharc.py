@@ -5,6 +5,7 @@ from conftest import SPEC_DIR
 import torcharc
 
 
+# test all the example specs
 @pytest.mark.parametrize("spec_file", list(SPEC_DIR.rglob("*.yaml")))
 def test_build_compile(spec_file):
     # Build the model using torcharc
