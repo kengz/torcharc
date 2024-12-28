@@ -10,21 +10,21 @@ modules:
           out_features: 256
       - ReLU:
       - LazyLinear:
-          out_features: 128
+          out_features: &feat_dim 128
       - ReLU:
 
   cat_embed_0:
     Embedding:
       num_embeddings: 1000
-      embedding_dim: 128
+      embedding_dim: *feat_dim
   cat_embed_1:
     Embedding:
       num_embeddings: 1000
-      embedding_dim: 128
+      embedding_dim: *feat_dim
   cat_embed_2:
     Embedding:
       num_embeddings: 1000
-      embedding_dim: 128
+      embedding_dim: *feat_dim
 
   # pairwise interactions (original mentions sum, pairwise dot, cat) - but modern day this can be anything, e.g. self-attention
   merge:

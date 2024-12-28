@@ -8,7 +8,7 @@ modules:
           out_features: 512
       - ReLU:
       - LazyLinear:
-          out_features: 512
+          out_features: 256
       - ReLU:
       - LazyLinear:
           out_features: 10

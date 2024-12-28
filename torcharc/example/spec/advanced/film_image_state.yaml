@@ -3,14 +3,14 @@ modules:
   conv_0:
     Sequential:
       - LazyConv2d:
-          out_channels: 32
+          out_channels: &conv_0_dim 64
           kernel_size: 3
       - ReLU:
 
   conv_1:
     Sequential:
       - LazyConv2d:
-          out_channels: 64
+          out_channels: &conv_1_dim 32
           kernel_size: 3
       - ReLU:
       - MaxPool2d:
@@ -21,21 +21,21 @@ modules:
   # prioprioception state, e.g. gyroscopic information
   gyro:
     LazyLinear:
-      out_features: 10
+      out_features: &gyro_dim 10
 
   film_0: # FiLM for conv_0 and state
     MergeFiLM:
       # image feature (conv channels)
-      feature_dim: 32
+      feature_dim: *conv_0_dim
       # state condition
-      conditioner_dim: 10
+      conditioner_dim: *gyro_dim
 
   film_1: # FiLM for conv_0 and state
     MergeFiLM:
       # image feature (conv channels)
-      feature_dim: 64
+      feature_dim: *conv_1_dim
       # state condition
-      conditioner_dim: 10
+      conditioner_dim: *gyro_dim
 
   flatten:
     Sequential:

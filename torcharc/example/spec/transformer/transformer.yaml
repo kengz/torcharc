@@ -1,13 +1,13 @@
 modules:
   src_embed:
     LazyLinear:
-      out_features: 128
+      out_features: &embed_dim 128
   tgt_embed:
     LazyLinear:
-      out_features: 128
+      out_features: *embed_dim
   transformer:
     Transformer:
-      d_model: 128
+      d_model: *embed_dim
       nhead: 8
       num_encoder_layers: 2
       num_decoder_layers: 2

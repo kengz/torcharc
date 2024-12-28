@@ -1,10 +1,10 @@
 modules:
   head_0:
     LazyLinear:
-      out_features: 10
+      out_features: &feat_dim 10
   head_1:
     LazyLinear:
-      out_features: 10
+      out_features: *feat_dim
   merge_0_1:
     MergeStack:
 

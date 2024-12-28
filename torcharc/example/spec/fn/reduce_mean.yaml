@@ -2,10 +2,10 @@ modules:
   text_token_embed:
     Embedding:
       num_embeddings: 10000
-      embedding_dim: 128
+      embedding_dim: &embed_dim 128
   text_tfmr:
     Transformer:
-      d_model: 128
+      d_model: *embed_dim
       nhead: 8
       num_encoder_layers: 2
       num_decoder_layers: 2
