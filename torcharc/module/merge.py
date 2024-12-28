@@ -10,7 +10,7 @@ class MergeDim(nn.Module):
         self.dim = dim
 
     def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class MergeConcat(MergeDim):
