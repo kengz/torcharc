@@ -1,6 +1,5 @@
 import pytest
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -18,7 +17,7 @@ B = 4  # batch size
 )
 def test_model(spec_file, input_shape, output_shape):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "basic" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "basic" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -35,6 +34,25 @@ def test_model(spec_file, input_shape, output_shape):
     assert traced_model(x).shape == y.shape
 
 
+def test_stereo_conv():
+    # Build the model using torcharc
+    spec_file = torcharc.SPEC_DIR / "basic" / "stereo_conv_reuse.yaml"
+    model = torcharc.build(spec_file)
+    assert isinstance(model, torch.nn.Module)
+
+    left_image = right_image = torch.randn(B, 3, 32, 32)
+    output = model(left_image=left_image, right_image=right_image)
+    left, right = output["left"], output["right"]
+    assert left.shape == (B, 10)
+    assert right.shape == (B, 10)
+
+    # Test compatibility with compile, script and trace
+    compiled_model = torch.compile(model)
+    assert len(compiled_model(left_image, right_image)) == 2
+    scripted_model = torch.jit.script(model)
+    assert len(scripted_model(left_image, right_image)) == 2
+
+
 @pytest.mark.parametrize(
     "spec_file, input_shape, output_shape",
     [
@@ -44,7 +62,7 @@ def test_model(spec_file, input_shape, output_shape):
 )
 def test_rnn(spec_file, input_shape, output_shape):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "basic" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "basic" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

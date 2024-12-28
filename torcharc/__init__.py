@@ -1,6 +1,11 @@
-from torcharc.module import get, fn, fork, merge
-from torcharc.validator.spec import build, Spec  # noqa
+from pathlib import Path
+
 import torch
+
+from torcharc.module import fn, fork, get, merge
+from torcharc.validator.spec import Spec, build  # noqa
+
+SPEC_DIR = Path(__file__).parent / "example" / "spec"
 
 
 def register_nn(cls: type):

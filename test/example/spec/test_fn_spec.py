@@ -1,5 +1,4 @@
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -8,7 +7,7 @@ B = 4  # batch size
 
 # general TorchFn no compat with JIT script
 def test_fn_topk():
-    spec_file = SPEC_DIR / "fn" / "fn_topk.yaml"
+    spec_file = torcharc.SPEC_DIR / "fn" / "fn_topk.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -26,7 +25,7 @@ def test_fn_topk():
 
 
 def test_reduce_mean():
-    spec_file = SPEC_DIR / "fn" / "reduce_mean.yaml"
+    spec_file = torcharc.SPEC_DIR / "fn" / "reduce_mean.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)

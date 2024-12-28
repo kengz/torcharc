@@ -1,6 +1,5 @@
 import pytest
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -16,7 +15,7 @@ B = 4  # batch size
 )
 def test_fork(spec_file, input_shape):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "fork" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "fork" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -32,7 +31,7 @@ def test_fork(spec_file, input_shape):
 
 
 def test_reduce_mean():
-    spec_file = SPEC_DIR / "fn" / "reduce_mean.yaml"
+    spec_file = torcharc.SPEC_DIR / "fn" / "reduce_mean.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)

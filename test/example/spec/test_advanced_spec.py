@@ -1,5 +1,4 @@
 import pytest
-from conftest import SPEC_DIR
 import torch
 import torcharc
 
@@ -16,7 +15,7 @@ B = 4  # batch size
 )
 def test_dlrm(spec_file):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "advanced" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "advanced" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -33,7 +32,7 @@ def test_dlrm(spec_file):
 
 
 def test_film_image_state():
-    spec_file = SPEC_DIR / "advanced" / "film_image_state.yaml"
+    spec_file = torcharc.SPEC_DIR / "advanced" / "film_image_state.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -53,7 +52,7 @@ def test_film_image_state():
 
 
 def test_film_image_text():
-    spec_file = SPEC_DIR / "advanced" / "film_image_text.yaml"
+    spec_file = torcharc.SPEC_DIR / "advanced" / "film_image_text.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -73,7 +72,7 @@ def test_film_image_text():
 
 
 def test_stereo_conv():
-    spec_file = SPEC_DIR / "advanced" / "stereo_conv.yaml"
+    spec_file = torcharc.SPEC_DIR / "advanced" / "stereo_conv.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)

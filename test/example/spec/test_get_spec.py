@@ -1,5 +1,4 @@
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -7,7 +6,7 @@ B = 4  # batch size
 
 
 def test_get():
-    spec_file = SPEC_DIR / "get" / "get.yaml"
+    spec_file = torcharc.SPEC_DIR / "get" / "get.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -25,7 +24,7 @@ def test_get():
 
 
 def test_index_select():
-    spec_file = SPEC_DIR / "get" / "index_select.yaml"
+    spec_file = torcharc.SPEC_DIR / "get" / "index_select.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -45,7 +44,7 @@ def test_index_select():
 
 
 def test_narrow():
-    spec_file = SPEC_DIR / "get" / "narrow.yaml"
+    spec_file = torcharc.SPEC_DIR / "get" / "narrow.yaml"
 
     # Build the model using torcharc
     model = torcharc.build(spec_file)

@@ -1,6 +1,5 @@
 import pytest
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -19,7 +18,7 @@ B = 4  # batch size
 )
 def test_model(spec_file):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "merge" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "merge" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -39,7 +38,7 @@ def test_model(spec_file):
 
 def test_bmm():
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "merge" / "bmm.yaml")
+    model = torcharc.build(torcharc.SPEC_DIR / "merge" / "bmm.yaml")
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -59,7 +58,7 @@ def test_bmm():
 
 def test_dot():
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "merge" / "dot.yaml")
+    model = torcharc.build(torcharc.SPEC_DIR / "merge" / "dot.yaml")
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape
@@ -79,7 +78,7 @@ def test_dot():
 
 def test_stack():
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "merge" / "stack.yaml")
+    model = torcharc.build(torcharc.SPEC_DIR / "merge" / "stack.yaml")
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

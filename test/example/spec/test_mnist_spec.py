@@ -1,6 +1,5 @@
 import pytest
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -16,7 +15,7 @@ B = 4  # batch size
 )
 def test_mnist(spec_file, input_shape, output_shape):
     # Build the model using torcharc
-    model = torcharc.build(SPEC_DIR / "mnist" / spec_file)
+    model = torcharc.build(torcharc.SPEC_DIR / "mnist" / spec_file)
     assert isinstance(model, torch.nn.Module)
 
     # Run the model and check the output shape

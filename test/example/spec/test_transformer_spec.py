@@ -1,5 +1,4 @@
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -8,7 +7,7 @@ B = 4  # batch size
 
 def test_attn():
     # attention module with q=src, k=tgt, v=tgt
-    spec_file = SPEC_DIR / "transformer" / "attn.yaml"
+    spec_file = torcharc.SPEC_DIR / "transformer" / "attn.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -28,7 +27,7 @@ def test_attn():
 
 def test_text_classifier():
     # attention for text classifier example
-    spec_file = SPEC_DIR / "transformer" / "text_classifier.yaml"
+    spec_file = torcharc.SPEC_DIR / "transformer" / "text_classifier.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -48,7 +47,7 @@ def test_text_classifier():
 
 def test_text_summarizer():
     # attention for text summarizer example
-    spec_file = SPEC_DIR / "transformer" / "text_summarizer.yaml"
+    spec_file = torcharc.SPEC_DIR / "transformer" / "text_summarizer.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
@@ -69,7 +68,7 @@ def test_text_summarizer():
 
 def test_transformer():
     # transformer with src, tgt
-    spec_file = SPEC_DIR / "transformer" / "transformer.yaml"
+    spec_file = torcharc.SPEC_DIR / "transformer" / "transformer.yaml"
     # Build the model using torcharc
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)

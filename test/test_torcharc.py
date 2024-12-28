@@ -1,6 +1,5 @@
 import pytest
 import torch
-from conftest import SPEC_DIR
 
 import torcharc
 
@@ -41,7 +40,7 @@ def test_spec():
 
 
 def test_build_from_file():
-    spec_file = SPEC_DIR / "basic" / "mlp.yaml"
+    spec_file = torcharc.SPEC_DIR / "basic" / "mlp.yaml"
     model = torcharc.build(spec_file)
     assert isinstance(model, torch.nn.Module)
 
@@ -96,7 +95,7 @@ def test_register_conflict():
 
 
 # test all the example specs
-@pytest.mark.parametrize("spec_file", list(SPEC_DIR.rglob("*.yaml")))
+@pytest.mark.parametrize("spec_file", list(torcharc.SPEC_DIR.rglob("*.yaml")))
 def test_build_compile(spec_file):
     # Build the model using torcharc
     model = torcharc.build(spec_file)
