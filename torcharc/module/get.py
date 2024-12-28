@@ -12,8 +12,8 @@ class Get(nn.Module):
         super().__init__()
         self.key = key
 
-    def forward(self, x) -> torch.Tensor:
-        return x[self.key]
+    def forward(self, input) -> torch.Tensor:
+        return input[self.key]
 
 
 class Narrow(nn.Module):
