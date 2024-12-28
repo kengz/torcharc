@@ -5,15 +5,16 @@ from torcharc.module import fn
 
 
 @pytest.mark.parametrize(
-    "name",
+    "name, dim",
     [
-        "mean",
-        "sum",
-        "prod",
+        ("mean", 1),
+        ("mean", [1]),
+        ("sum", 1),
+        ("prod", 1),
     ],
 )
-def test_reduce(name):
-    model = fn.Reduce(name, dim=1)
+def test_reduce(name, dim):
+    model = fn.Reduce(name, dim=dim)
     assert isinstance(model, torch.nn.Module)
 
     x = torch.randn(4, 3)
@@ -35,6 +36,7 @@ def test_reduce(name):
         ("sqrt", {}),
         ("topk", {"k": 3}),
         ("mean", {"dim": 1}),
+        ("mean", {"dim": [1]}),
     ],
 )
 def test_torch_fn(name, kwargs):

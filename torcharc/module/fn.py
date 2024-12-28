@@ -4,17 +4,14 @@ from torch import nn
 
 class Reduce(nn.Module):
     """
-    Call torch reduction ops https://pytorch.org/docs/stable/torch.html#reduction-ops with common arguments `dim` and `keepdim` (so, applicable to any torch function)
+    Call torch reduction ops https://pytorch.org/docs/stable/torch.html#reduction-ops with common arguments `dim` and `keepdim` - this covers most but not all functions. For general functions, see TorchFn.
     This is compatible with torch compile, JIT script and JIT trace by using static arguments for performance instead of dynamic *args and **kwargs
     """
 
     def __init__(self, name: str, dim: int | list[int] | None, keepdim: bool = False):
         super().__init__()
         self.fn = getattr(torch, name)
-        if isinstance(dim, list):  # Convert list to tensor and register as buffer
-            self.register_buffer("dim", torch.tensor(dim, dtype=torch.long))
-        else:
-            self.dim = dim
+        self.dim = dim  # all reduction ops use dim as int or tuple[int]
         self.keepdim = keepdim
 
     def forward(self, input) -> torch.Tensor:
@@ -31,10 +28,7 @@ class TorchFn(nn.Module):
         super().__init__()
         self.fn = getattr(torch, name)
         self.kwargs = kwargs or {}
-        # basic guard - convert iterable values to tensors
-        for key, value in self.kwargs.items():
-            if isinstance(value, (list, tuple)):
-                self.kwargs[key] = torch.tensor(value)
+        # NOTE most iterables values aren't tensors; if needed like in the case of torch.index_select, implement and register a separate torch.nn.Module, like get.IndexSelect
 
     def forward(self, input) -> torch.Tensor:
         return self.fn(input, **self.kwargs)
