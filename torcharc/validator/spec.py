@@ -43,7 +43,7 @@ class Spec(BaseModel):
     graph:
         input: x
         modules:
-            mlp: x
+            mlp: [x]
         output: mlp
     '''
 
@@ -100,7 +100,7 @@ def build(spec: dict | str) -> fx.GraphModule:
     graph:
         input: x
         modules:
-            mlp: x
+            mlp: [x]
         output: mlp
     '''
 
