@@ -21,7 +21,7 @@ pip install torcharc
 
 The returned model is a PyTorch `nn.Module`, fully-compatible with `torch.compile`, and mostly compatible with PyTorch JIT script and trace.
 
-See more examples below, then see how it work at the end.
+See more examples below, then see how it works at the end.
 
 ---
 
