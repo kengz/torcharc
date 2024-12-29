@@ -86,14 +86,6 @@ graph:
 
 ```python
 model = torcharc.build(torcharc.SPEC_DIR / "basic" / "mlp.yaml")
-model
-# GraphModule(
-#   (mlp): Sequential(
-#     (0): LazyLinear(in_features=0, out_features=64, bias=True)
-#     (1): ReLU()
-#     (2): LazyLinear(in_features=0, out_features=10, bias=True)
-#   )
-# )
 assert isinstance(model, torch.nn.Module)
 
 # Run the model and check the output shape
@@ -108,7 +100,25 @@ scripted_model = torch.jit.script(model)
 assert scripted_model(x).shape == y.shape
 traced_model = torch.jit.trace(model, (x))
 assert traced_model(x).shape == y.shape
+
+model
 ```
+
+<details><summary>model</summary>
+<p>
+
+```
+GraphModule(
+  (mlp): Sequential(
+    (0): Linear(in_features=128, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=64, out_features=10, bias=True)
+  )
+)
+```
+
+</p>
+</details>
 
 ---
 
@@ -141,34 +151,54 @@ graph:
 </details>
 
 ```python
-# the PyTorch Lazy layers will infer the input size from the first forward pass. This is recommended as it greatly simplifies the model definition.
+# PyTorch Lazy layers will infer the input size from the first forward pass. This is recommended as it greatly simplifies the model definition.
 model = torcharc.build(torcharc.SPEC_DIR / "basic" / "mlp_lazy.yaml")
 model  # shows LazyLinear before first forward pass
-# GraphModule(
-#   (mlp): Sequential(
-#     (0): LazyLinear(in_features=0, out_features=64, bias=True)
-#     (1): ReLU()
-#     (2): LazyLinear(in_features=0, out_features=10, bias=True)
-#   )
-# )
+```
 
+<details><summary>model (before forward pass)</summary>
+<p>
+
+```
+GraphModule(
+  (mlp): Sequential(
+    (0): LazyLinear(in_features=0, out_features=64, bias=True)
+    (1): ReLU()
+    (2): LazyLinear(in_features=0, out_features=10, bias=True)
+  )
+)
+```
+
+</p>
+</details>
+
+```python
 # Run the model and check the output shape
 x = torch.randn(4, 128)
 y = model(x)
 assert y.shape == (4, 10)
 
-model  # shows Linear after first forward pass
-# GraphModule(
-#   (mlp): Sequential(
-#     (0): Linear(in_features=128, out_features=64, bias=True)
-#     (1): ReLU()
-#     (2): Linear(in_features=64, out_features=10, bias=True)
-#   )
-# )
-
 # Because it is lazy - wait till first forward pass to run compile, script or trace
 compiled_model = torch.compile(model)
+
+model  # shows Linear after first forward pass
 ```
+
+<details><summary>model (after forward pass)</summary>
+<p>
+
+```
+GraphModule(
+  (mlp): Sequential(
+    (0): Linear(in_features=128, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=64, out_features=10, bias=True)
+  )
+)
+```
+
+</p>
+</details>
 
 ---
 
