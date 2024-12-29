@@ -1358,6 +1358,7 @@ version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -1388,6 +1389,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "pydantic", specifier = ">=2.10.4" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "tabulate", marker = "extra == 'pytorch'", specifier = ">=0.9.0" },
     { name = "torch", marker = "platform_system == 'Darwin' and extra == 'pytorch'", specifier = ">=2.5.1" },
     { name = "torch", marker = "platform_system != 'Darwin' and extra == 'pytorch'", specifier = ">=2.5.1", index = "https://download.pytorch.org/whl/cu124" },
