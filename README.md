@@ -21,6 +21,8 @@ The returned model is a PyTorch `nn.Module`, fully-compatible with `torch.compil
 
 See more examples below, then see how it work at the end.
 
+---
+
 ### Example: build model from spec file
 
 ```python
@@ -48,6 +50,8 @@ model = torcharc.build(spec_dict)
 spec = torcharc.Spec(**spec_dict)
 model = spec.build()
 ```
+
+---
 
 ### Example: basic MLP
 
@@ -103,6 +107,8 @@ assert scripted_model(x).shape == y.shape
 traced_model = torch.jit.trace(model, (x))
 assert traced_model(x).shape == y.shape
 ```
+
+---
 
 ### Example: MLP (Lazy)
 
@@ -161,6 +167,8 @@ model  # shows Linear after first forward pass
 # Because it is lazy - wait till first forward pass to run compile, script or trace
 compiled_model = torch.compile(model)
 ```
+
+---
 
 ### Example: MNIST conv
 
@@ -242,6 +250,8 @@ GraphModule(
 
 </p>
 </details>
+
+---
 
 ### Example: Reuse syntax: Stereo Conv
 
@@ -345,6 +355,8 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: transformer
 
 <details><summary>spec file</summary>
@@ -440,6 +452,8 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: Get modules: Attention
 
 > See more in [torcharc/module/get.py](torcharc/module/get.py)
@@ -518,6 +532,8 @@ GraphModule(
 
 </p>
 </details>
+
+---
 
 ### Example: Merge modules: DLRM
 
@@ -635,6 +651,8 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: Merge modules: FiLM
 
 <details><summary>spec file</summary>
@@ -728,6 +746,8 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: Fork modules: Chunk
 
 > See more in [torcharc/module/fork.py](torcharc/module/fork.py)
@@ -792,6 +812,8 @@ GraphModule(
 
 </p>
 </details>
+
+---
 
 ### Example: reduction op functional modules: Reduce
 
@@ -890,6 +912,8 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: general functional modules: TorchFn
 
 > See more in [torcharc/module/fn.py](torcharc/module/fn.py)
@@ -960,9 +984,16 @@ GraphModule(
 </p>
 </details>
 
+---
+
 ### Example: more
 
-See more examples in spec files [torcharc/example/spec/](torcharc/example/spec/) and unit tests [test/example/spec/](test/example/spec/).
+See more examples:
+
+- demo notebook from above [torcharc/example/notebook/demo.py](torcharc/example/notebook/demo.py)
+- Lightning MNIST example usage [torcharc/example/notebook/lightning_mnist.py](torcharc/example/notebook/lightning_mnist.py)
+- spec files [torcharc/example/spec/](torcharc/example/spec/)
+- unit tests [test/example/spec/](test/example/spec/)
 
 ## How does it work
 
