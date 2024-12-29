@@ -14,7 +14,7 @@ pip install torcharc
 
 1. specify model architecture in a YAML spec file, e.g. at `spec_filepath = "./example/spec/basic/mlp.yaml"`
 2. `import torcharc`
-3. (optional) if you have custom torch.nn.Module, e.g. `MyModule`, register it with `torcharc.register_nne(MyModule)`
+3. (optional) if you have custom torch.nn.Module, e.g. `MyModule`, register it with `torcharc.register_nn(MyModule)`
 4. run `model = torcharc.build(spec_filepath)`
 
 The returned model is a PyTorch `nn.Module`, fully-compatible with `torch.compile`, and mostly compatible with PyTorch JIT script and trace.
