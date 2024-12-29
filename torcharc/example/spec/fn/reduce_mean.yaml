@@ -1,0 +1,29 @@
+modules:
+  text_token_embed:
+    Embedding:
+      num_embeddings: 10000
+      embedding_dim: &embed_dim 128
+  text_tfmr:
+    Transformer:
+      d_model: *embed_dim
+      nhead: 8
+      num_encoder_layers: 2
+      num_decoder_layers: 2
+      dropout: 0.1
+      batch_first: true
+  text_embed:
+    # sentence embedding has shape [batch_size, seq_len, embed_dim],
+    # one way to reduce it to a single sentence embedding is by pooling, e.g. reduce with mean over seq
+    Reduce:
+      name: mean
+      dim: 1
+
+graph:
+  input: [text]
+  modules:
+    text_token_embed: [text]
+    text_tfmr:
+      src: text_token_embed
+      tgt: text_token_embed
+    text_embed: [text_tfmr]
+  output: text_embed

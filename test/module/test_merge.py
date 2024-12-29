@@ -1,59 +1,136 @@
-from torcharc.module.merge import ConcatMerge, FiLMMerge, Merge
 import pytest
 import torch
 
-
-@pytest.mark.parametrize('xs,out_shape', [
-    (
-        {'x0': torch.rand(4, 8), 'x1': torch.rand(4, 10)},
-        [4, 18],
-    ), (
-        {'x0': torch.rand(4, 8), 'x1': torch.rand(4, 10), 'x2': torch.rand(4, 12)},
-        [4, 30],
-    ),
-])
-def test_concat_merge(xs, out_shape):
-    merge = ConcatMerge()
-    assert isinstance(merge, Merge)
-    y = merge(xs)
-    assert y.shape == torch.Size(out_shape)
+from torcharc.module import merge
 
 
-@pytest.mark.parametrize('feature', [
-    torch.ones([1, 3]),  # vector
-    torch.ones([1, 3, 20]),  # time series
-    torch.ones([1, 3, 20, 20]),  # image
-])
-def test_film_affine_transform(feature):
-    batch_size, n_feat, *_ = feature.shape
-    feature_dim = len(feature.shape)
-    conditioner_scale = torch.tensor([[1.0, 0.0, 1.0]])
-    conditioner_shift = torch.zeros([batch_size, n_feat])
-    y = FiLMMerge.affine_transform(feature, conditioner_scale, conditioner_shift)
-    if feature_dim > 2:
-        mean_y = y.mean(list(range(feature_dim))[2:])
-    else:
-        mean_y = y
-    assert torch.equal(mean_y, conditioner_scale)
+def test_merge_concat():
+    model = merge.MergeConcat()
+    assert isinstance(model, torch.nn.Module)
+
+    x_0 = torch.randn(4, 2)
+    x_1 = torch.randn(4, 3)
+    y = model((x_0, x_1))
+    assert y.shape == (4, 5)
+
+    compiled_model = torch.compile(model)
+    assert compiled_model((x_0, x_1)).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model((x_0, x_1)).shape == y.shape
+    traced_model = torch.jit.trace(model, ((x_0, x_1),))
+    assert traced_model((x_0, x_1)).shape == y.shape
 
 
-@pytest.mark.parametrize('names,shapes,xs', [
-    (  # vector
-        {'feature': 'vector_0', 'conditioner': 'vector_1'},
-        {'vector_0': [3], 'vector_1': [8]},
-        {'vector_0': torch.rand(4, 3), 'vector_1': torch.rand(4, 8)},
-    ), (  # time series
-        {'feature': 'ts', 'conditioner': 'vector'},
-        {'ts': [3, 20], 'vector': [8]},
-        {'ts': torch.rand(4, 3, 20), 'vector': torch.rand(4, 8)},
-    ), (  # image
-        {'feature': 'image', 'conditioner': 'vector'},
-        {'image': [3, 20, 20], 'vector': [8]},
-        {'image': torch.rand(4, 3, 20, 20), 'vector': torch.rand(4, 8)},
+def test_merge_stack():
+    model = merge.MergeStack()
+    assert isinstance(model, torch.nn.Module)
+
+    x_0 = torch.randn(4, 3)
+    x_1 = torch.randn(4, 3)
+    y = model((x_0, x_1))
+    assert y.shape == (4, 2, 3)
+
+    compiled_model = torch.compile(model)
+    assert compiled_model((x_0, x_1)).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model((x_0, x_1)).shape == y.shape
+    traced_model = torch.jit.trace(model, ((x_0, x_1),))
+    assert traced_model((x_0, x_1)).shape == y.shape
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        merge.MergeSum(),
+        merge.MergeMean(),
+        merge.MergeProd(),
+    ],
+)
+def test_merge_sum(model):
+    assert isinstance(model, torch.nn.Module)
+
+    x_0 = torch.randn(4, 3)
+    x_1 = torch.randn(4, 3)
+    y = model((x_0, x_1))
+    assert y.shape == (4, 3)
+
+    compiled_model = torch.compile(model)
+    assert compiled_model((x_0, x_1)).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model((x_0, x_1)).shape == y.shape
+    traced_model = torch.jit.trace(model, ((x_0, x_1),))
+    assert traced_model((x_0, x_1)).shape == y.shape
+
+
+def test_merge_dot():
+    model = merge.MergeDot()
+    assert isinstance(model, torch.nn.Module)
+
+    x_0 = torch.randn(4, 3)
+    x_1 = torch.randn(4, 3)
+    y = model(x_0, x_1)
+    assert y.shape == (4,)
+
+    compiled_model = torch.compile(model)
+    assert compiled_model(x_0, x_1).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model(x_0, x_1).shape == y.shape
+    traced_model = torch.jit.trace(
+        model,
+        (
+            x_0,
+            x_1,
+        ),
     )
-])
-def test_film_merge(names, shapes, xs):
-    merge = FiLMMerge(names, shapes)
-    assert isinstance(merge, Merge)
-    y = merge(xs)
-    assert y.shape == xs[names['feature']].shape
+    assert traced_model(x_0, x_1).shape == y.shape
+
+
+def test_merge_bmm():
+    model = merge.MergeBMM()
+    assert isinstance(model, torch.nn.Module)
+
+    m_0 = torch.randn(4, 3, 4)
+    m_1 = torch.randn(4, 4, 5)
+    y = model(m_0, m_1)
+    assert y.shape == (4, 3, 5)
+
+    compiled_model = torch.compile(model)
+    assert compiled_model(m_0, m_1).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model(m_0, m_1).shape == y.shape
+    traced_model = torch.jit.trace(
+        model,
+        (
+            m_0,
+            m_1,
+        ),
+    )
+    assert traced_model(m_0, m_1).shape == y.shape
+
+
+@pytest.mark.parametrize(
+    "feature_dim, conditioner_dim, feature, conditioner",
+    [
+        (3, 8, torch.rand(4, 3), torch.rand(4, 8)),  # vector-vector
+        (3, 8, torch.rand(4, 3, 32, 32), torch.rand(4, 8)),  # conv-vector
+    ],
+)
+def test_merge_film(feature_dim, conditioner_dim, feature, conditioner):
+    model = merge.MergeFiLM(feature_dim, conditioner_dim)
+    assert isinstance(model, torch.nn.Module)
+
+    y = model(feature, conditioner)
+    assert y.shape == feature.shape
+
+    compiled_model = torch.compile(model)
+    assert compiled_model(feature, conditioner).shape == y.shape
+    scripted_model = torch.jit.script(model)
+    assert scripted_model(feature, conditioner).shape == y.shape
+    traced_model = torch.jit.trace(
+        model,
+        (
+            feature,
+            conditioner,
+        ),
+    )
+    assert traced_model(feature, conditioner).shape == y.shape

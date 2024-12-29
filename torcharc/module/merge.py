@@ -1,52 +1,94 @@
-from abc import ABC, abstractmethod
-from torch import nn
-from typing import Dict, List
 import torch
+from torch import nn
 
 
-class Merge(ABC, nn.Module):
-    '''A Merge module merges a dict of tensors into one tensor'''
+class MergeDim(nn.Module):
+    """Merge module along a dimension - base class"""
 
-    @abstractmethod
-    def forward(self, xs: dict) -> torch.Tensor:  # pragma: no cover
-        raise NotImplementedError
-
-
-class ConcatMerge(Merge):
-    '''Merge layer to merge a dict of tensors by concatenating along dim=1. Reverse of Split'''
-
-    def forward(self, xs: dict) -> torch.Tensor:
-        return torch.cat(list(xs.values()), dim=1)
-
-
-class FiLMMerge(Merge):
-    '''
-    Merge layer to merge a dict of 2 tensors by Feature-wise Linear Modulation layer https://distill.pub/2018/feature-wise-transformations/
-    Takes a feature tensor and conditioning tensor and affine-transforms it with a conditioning tensor:
-    output = conditioner_scale * feature + conditioner_shift
-    The conditioning tensor is a vector, and will be passed through a Linear layer with out_features = number of features or channels (image), and the operation is element-wise on the features or channels.
-    '''
-
-    def __init__(self, names: Dict[str, str], shapes: Dict[str, List[int]]) -> None:
+    def __init__(self, dim: int = 1):
         super().__init__()
-        self.feature_name = names['feature']
-        self.conditioner_name = names['conditioner']
-        assert len(shapes) == 2, f'shapes {shapes} should specify only two keys for feature and conditioner'
-        self.feature_size = shapes[self.feature_name][0]
-        self.conditioner_size = shapes[self.conditioner_name][0]
-        self.conditioner_scale = nn.Linear(self.conditioner_size, self.feature_size)
-        self.conditioner_shift = nn.Linear(self.conditioner_size, self.feature_size)
+        self.dim = dim
 
-    @classmethod
-    def affine_transform(cls, feature: torch.Tensor, conditioner_scale: torch.Tensor, conditioner_shift: torch.Tensor) -> torch.Tensor:
-        '''Apply affine transform with safe-broadcast across the entire features/channels of the feature tensor'''
-        view_shape = list(conditioner_scale.shape) + [1] * (feature.dim() - conditioner_scale.dim())
-        return conditioner_scale.view(*view_shape) * feature + conditioner_shift.view(*view_shape)
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        raise NotImplementedError  # pragma: no cover
 
-    def forward(self, xs: dict) -> torch.Tensor:
-        '''Apply FiLM affine transform on feature using conditioner'''
-        feature = xs[self.feature_name]
-        conditioner = xs[self.conditioner_name]
-        conditioner_scale = self.conditioner_scale(conditioner)
-        conditioner_shift = self.conditioner_shift(conditioner)
-        return self.affine_transform(feature, conditioner_scale, conditioner_shift)
+
+class MergeConcat(MergeDim):
+    """Merge module using torch.cat along a dimension"""
+
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        return torch.cat(args, dim=self.dim)
+
+
+class MergeStack(MergeDim):
+    """Merge module using torch.stack along a dimension"""
+
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        return torch.stack(args, dim=self.dim)
+
+
+class MergeSum(MergeDim):
+    """Merge module using torch.sum along a dimension"""
+
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        return torch.sum(torch.stack(args, dim=self.dim), dim=self.dim)
+
+
+class MergeProd(MergeDim):
+    """Merge module using torch.prod along a dimension"""
+
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        return torch.prod(torch.stack(args, dim=self.dim), dim=self.dim)
+
+
+class MergeMean(MergeDim):
+    """Merge module using torch.mean along a dimension"""
+
+    def forward(self, args: list[torch.Tensor]) -> torch.Tensor:
+        return torch.mean(torch.stack(args, dim=self.dim), dim=self.dim)
+
+
+class MergeDot(nn.Module):
+    """Merge module using dot-product, e.g. similarity matrix for CLIP"""
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.linalg.vecdot(x, y)
+
+
+class MergeBMM(nn.Module):
+    """Merge module using batch matrix-matrix product"""
+
+    def forward(self, input: torch.Tensor, mat2: torch.Tensor) -> torch.Tensor:
+        return torch.bmm(input, mat2)
+
+
+class MergeFiLM(nn.Module):
+    """
+    Merge layer capture interaction between 2 features as linear transformation using FiLM: Feature-wise Linear Modulation https://distill.pub/2018/feature-wise-transformations/
+    assuming x is a FiLM layer's input, z is a conditioning input, and gamma and beta are z-dependent scaling and shifting vectors
+    FiLM(x) = gamma(z) * x + beta(z)
+    """
+
+    def __init__(self, feature_dim: int, conditioner_dim: int):
+        super().__init__()
+        self.gamma = nn.Linear(conditioner_dim, feature_dim)
+        self.beta = nn.Linear(conditioner_dim, feature_dim)
+
+    def reshape_cond(self, feat: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+        """
+        Give a feature tensor, reshape the conditioning tensor to match its dim
+        e.g. reshape cond (4, 32) to match feat (4, 32, 64, 64) -> (4, 32, 1, 1)
+        This is TorchScript-compatible
+        """
+        if cond.dim() == feat.dim():
+            return cond
+        # Get the target shape for broadcasting
+        target_shape = cond.shape + (1,) * (feat.dim() - cond.dim())
+        # Reshape cond to match the broadcast shape
+        return cond.reshape(target_shape)
+
+    def forward(self, feature: torch.Tensor, conditioner: torch.Tensor) -> torch.Tensor:
+        cond_gamma, cond_beta = self.gamma(conditioner), self.beta(conditioner)
+        return self.reshape_cond(feature, cond_gamma) * feature + self.reshape_cond(
+            feature, cond_beta
+        )

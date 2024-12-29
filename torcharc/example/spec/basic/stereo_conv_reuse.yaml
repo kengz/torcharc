@@ -1,0 +1,40 @@
+# stereoscopic vision conv with shared (reused) conv
+modules:
+  # single conv shared for left and right
+  conv:
+    Sequential:
+      - LazyConv2d:
+          out_channels: 32
+          kernel_size: 3
+      - ReLU:
+      - LazyConv2d:
+          out_channels: 64
+          kernel_size: 3
+      - ReLU:
+      - MaxPool2d:
+          kernel_size: 2
+      - Dropout:
+          p: 0.25
+      - Flatten:
+
+  # separate identical mlp for left and right for processing
+  left_mlp: &left_mlp
+    Sequential:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - ReLU:
+  right_mlp:
+    <<: *left_mlp
+
+graph:
+  input: [left_image, right_image]
+  modules:
+    # reuse syntax: <module>~<suffix>
+    conv~left: [left_image]
+    conv~right: [right_image]
+    left_mlp: [conv~left]
+    right_mlp: [conv~right]
+  output: [left_mlp, right_mlp]

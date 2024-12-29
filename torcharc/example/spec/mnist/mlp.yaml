@@ -1,0 +1,22 @@
+# MNIST MLP model example from PyTorch https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
+# NOTE this is merely for illustration of functionality; MLP is not practical for MNIST
+modules:
+  mlp:
+    Sequential:
+      - Flatten:
+      - LazyLinear:
+          out_features: 512
+      - ReLU:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: x
+  modules:
+    mlp: [x]
+  output: mlp

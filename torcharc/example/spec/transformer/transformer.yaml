@@ -1,0 +1,30 @@
+modules:
+  src_embed:
+    LazyLinear:
+      out_features: &embed_dim 128
+  tgt_embed:
+    LazyLinear:
+      out_features: *embed_dim
+  transformer:
+    Transformer:
+      d_model: *embed_dim
+      nhead: 8
+      num_encoder_layers: 2
+      num_decoder_layers: 2
+      dim_feedforward: 1024
+      dropout: 0.1
+      batch_first: true
+  mlp:
+    LazyLinear:
+      out_features: 10
+
+graph:
+  input: [src_x, tgt_x]
+  modules:
+    src_embed: [src_x]
+    tgt_embed: [tgt_x]
+    transformer:
+      src: src_embed
+      tgt: tgt_embed
+    mlp: [transformer]
+  output: mlp

@@ -1,0 +1,57 @@
+[project]
+name = "torcharc"
+version = "2.0.0"
+description = "Build PyTorch models by specifying architectures."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10.4",
+]
+
+[project.optional-dependencies]
+pytorch = [
+  "tabulate>=0.9.0",
+  "torch>=2.5.1",
+  "torchvision>=0.20.1",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124", marker = "platform_system != 'Darwin'"},
+]
+torchvision = [
+  { index = "pytorch-cu124", marker = "platform_system != 'Darwin'"},
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "lightning>=2.5.0.post0",
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.3",
+    "tabulate>=0.9.0",
+    "tensorboard>=2.18.0",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    "-n 4",
+    '--verbose',
+    "--cov=torcharc",
+    "--cov-report=html",
+    "--cov-report=term",
+]
+filterwarnings = "ignore"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

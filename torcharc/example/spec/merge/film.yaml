@@ -1,0 +1,27 @@
+# FiLM https://distill.pub/2018/feature-wise-transformations/
+modules:
+  feat:
+    LazyLinear:
+      out_features: &feat_dim 10
+  cond:
+    LazyLinear:
+      out_features: &cond_dim 4
+  merge_0_1:
+    MergeFiLM:
+      feature_dim: *feat_dim
+      conditioner_dim: *cond_dim
+  tail:
+    Linear:
+      in_features: *feat_dim
+      out_features: 1
+
+graph:
+  input: [x_0, x_1]
+  modules:
+    feat: [x_0]
+    cond: [x_1]
+    merge_0_1:
+      feature: feat
+      conditioner: cond
+    tail: [merge_0_1]
+  output: tail

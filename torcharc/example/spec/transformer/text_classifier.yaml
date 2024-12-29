@@ -1,0 +1,39 @@
+# attention for text classifier example
+modules:
+  embedding:
+    Embedding:
+      num_embeddings: 10000
+      embedding_dim: &embed_dim 128
+  # NOTE MultiheadAttention has 2 outputs: output, attn_weights
+  attn:
+    MultiheadAttention:
+      embed_dim: *embed_dim
+      num_heads: 8
+      batch_first: true
+  self_attn_output:
+    Get:
+      key: 0
+  # pool over sequence (batch_size, seq_len, embed_dim) to get sentence embedding
+  pool:
+    Reduce:
+      name: mean
+      dim: 1
+  mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - LazyLinear:
+          out_features: 10
+
+graph:
+  input: [tokens]
+  modules:
+    embedding: [tokens]
+    attn:
+      query: embedding
+      key: embedding
+      value: embedding
+    self_attn_output: [attn]
+    pool: [self_attn_output]
+    mlp: [pool]
+  output: mlp

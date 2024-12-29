@@ -1,0 +1,15 @@
+modules:
+  mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+
+graph:
+  # use str to name input placeholder
+  input: x
+  modules:
+    mlp: [x]
+  output: mlp

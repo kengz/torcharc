@@ -1,0 +1,55 @@
+# basic DLRM architecture ref: https://github.com/facebookresearch/dlrm and ref: https://catalog.ngc.nvidia.com/orgs/nvidia/resources/dlrm_for_pytorch
+modules:
+  # NOTE dense mlp and each embedding needs to be the same size
+  dense_mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 512
+      - ReLU:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: &feat_dim 128
+      - ReLU:
+
+  cat_embed_0:
+    Embedding:
+      num_embeddings: 1000
+      embedding_dim: *feat_dim
+  cat_embed_1:
+    Embedding:
+      num_embeddings: 1000
+      embedding_dim: *feat_dim
+  cat_embed_2:
+    Embedding:
+      num_embeddings: 1000
+      embedding_dim: *feat_dim
+
+  # pairwise interactions (original mentions sum, pairwise dot, cat) - but modern day this can be anything, e.g. self-attention
+  merge:
+    MergeSum:
+
+  # final classifier for probability of click
+  classifier:
+    Sequential:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 1
+      - Sigmoid:
+
+graph:
+  input: [dense, cat_0, cat_1, cat_2]
+  modules:
+    dense_mlp: [dense]
+    cat_embed_0: [cat_0]
+    cat_embed_1: [cat_1]
+    cat_embed_2: [cat_2]
+    merge: [[dense_mlp, cat_embed_0, cat_embed_1, cat_embed_2]]
+    classifier: [merge]
+  output: classifier

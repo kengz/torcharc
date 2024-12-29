@@ -1,0 +1,18 @@
+modules:
+  head_0:
+    LazyLinear:
+      out_features: &feat_dim 10
+  head_1:
+    LazyLinear:
+      out_features: *feat_dim
+  merge_0_1:
+    MergeStack:
+
+graph:
+  input: [x_0, x_1]
+  modules:
+    head_0: [x_0]
+    head_1: [x_1]
+    # merge uses list of tensors as inputs, so args = ([head_0, head_1],)
+    merge_0_1: [[head_0, head_1]]
+  output: merge_0_1

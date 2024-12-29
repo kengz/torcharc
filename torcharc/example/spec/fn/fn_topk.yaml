@@ -1,0 +1,22 @@
+modules:
+  mlp:
+    Sequential:
+      - Flatten:
+      - LazyLinear:
+          out_features: 512
+      - ReLU:
+      - LazyLinear:
+          out_features: 512
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      # use generic torch function with caveat of incompatible with JIT script
+      - TorchFn:
+          name: topk
+          k: 3
+
+graph:
+  input: x
+  modules:
+    mlp: [x]
+  output: mlp

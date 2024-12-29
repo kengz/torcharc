@@ -1,0 +1,15 @@
+modules:
+  head:
+    LazyLinear:
+      out_features: 10
+  get_idx:
+    IndexSelect:
+      dim: 1
+      index: [3, 5, 7]
+
+graph:
+  input: x
+  modules:
+    head: [x]
+    get_idx: [head]
+  output: get_idx

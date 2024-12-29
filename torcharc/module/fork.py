@@ -1,37 +1,26 @@
-from abc import ABC, abstractmethod
-from torch import nn
-from typing import Dict, List
-import pydash as ps
 import torch
+from torch import nn
 
 
-class Fork(ABC, nn.Module):
-    '''A Fork module forks one tensor into a dict of multiple tensors.'''
+class ForkChunk(nn.Module):
+    """Fork a tensor using torch.chunk along a dimension"""
 
-    @abstractmethod
-    def forward(self, x: torch.Tensor) -> dict:  # pragma: no cover
-        raise NotImplementedError
-
-
-class ReuseFork(Fork):
-    '''Fork layer to reuse a tensor multiple times via ref in dict'''
-
-    def __init__(self, names: List[str]) -> None:
+    def __init__(self, chunks: int = 2, dim: int = 1):
         super().__init__()
-        self.names = names
-        self.num_reuse = len(names)
+        self.chunks = chunks
+        self.dim = dim
 
-    def forward(self, x: torch.Tensor) -> dict:
-        return dict(zip(self.names, [x] * self.num_reuse))
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.chunk(x, chunks=self.chunks, dim=self.dim)
 
 
-class SplitFork(Fork):
-    '''Fork layer to split a tensor along dim=1 into multiple tensors. Reverse of ConcatMerge.'''
+class ForkSplit(nn.Module):
+    """Fork a tensor using torch.split along a dimension"""
 
-    def __init__(self, shapes: Dict[str, List[int]]) -> None:
+    def __init__(self, split_size_or_sections: int | list[int], dim: int = 1):
         super().__init__()
-        self.shapes = shapes
-        self.split_size = ps.flatten(self.shapes.values())
+        self.split_size_or_sections = split_size_or_sections
+        self.dim = dim
 
-    def forward(self, x: torch.Tensor) -> dict:
-        return dict(zip(self.shapes, x.split(self.split_size, dim=1)))
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.split(x, self.split_size_or_sections, dim=self.dim)

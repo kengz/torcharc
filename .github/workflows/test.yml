@@ -1,7 +1,5 @@
-name: publish
-on:
-  push:
-    branches: [main]
+name: test
+on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,9 +10,5 @@ jobs:
         run: uv python install
       - name: Install the project
         run: uv sync --all-extras --dev
-      - name: Publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          uv build
-          uv publish
+      - name: Run tests
+        run: uv run pytest

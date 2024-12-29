@@ -1,0 +1,70 @@
+# FiLM - multiple applications https://distill.pub/2018/feature-wise-transformations/
+modules:
+  conv_0:
+    Sequential:
+      - LazyConv2d:
+          out_channels: &conv_0_dim 64
+          kernel_size: 3
+      - ReLU:
+
+  conv_1:
+    Sequential:
+      - LazyConv2d:
+          out_channels: &conv_1_dim 32
+          kernel_size: 3
+      - ReLU:
+      - MaxPool2d:
+          kernel_size: 2
+      - Dropout:
+          p: 0.25
+
+  # prioprioception state, e.g. gyroscopic information
+  gyro:
+    LazyLinear:
+      out_features: &gyro_dim 10
+
+  film_0: # FiLM for conv_0 and state
+    MergeFiLM:
+      # image feature (conv channels)
+      feature_dim: *conv_0_dim
+      # state condition
+      conditioner_dim: *gyro_dim
+
+  film_1: # FiLM for conv_0 and state
+    MergeFiLM:
+      # image feature (conv channels)
+      feature_dim: *conv_1_dim
+      # state condition
+      conditioner_dim: *gyro_dim
+
+  flatten:
+    Sequential:
+      - Flatten:
+      - LazyLinear:
+          out_features: 256
+
+  classifier:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: [image, state]
+  modules:
+    conv_0: [image]
+    gyro: [state]
+    film_0:
+      feature: conv_0
+      conditioner: gyro
+    conv_1: [film_0]
+    film_1:
+      feature: conv_1
+      conditioner: gyro
+    flatten: [film_1]
+    classifier: [flatten]
+  output: classifier

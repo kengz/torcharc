@@ -1,0 +1,46 @@
+# Example RNN from https://www.kaggle.com/code/tartakovsky/pytorch-lightning-lstm-timeseries-clean-code
+modules:
+  rnn:
+    LSTM:
+      input_size: 7
+      hidden_size: 100
+      num_layers: 1
+      batch_first: true
+      dropout: 0.2
+  rnn_output:
+    # rnn output is tuple; get the first element to pass to mlp
+    Get:
+      key: 0
+  # use torch.narrow to get the last seq element of RNN (batch_size, seq_len, hidden_size) - output[:, -1, :]
+  rnn_seq_last:
+    Narrow:
+      dim: 1
+      start: -1
+      length: 1
+  # reduce (batch, 1, hidden_size) to (batch, hidden_size)
+  flatten_last:
+    Flatten:
+  mlp:
+    Sequential:
+      - LazyBatchNorm1d:
+      - Dropout2d:
+          p: 0.25
+      - LazyLinear:
+          out_features: 32
+      - ReLU:
+      - Dropout2d:
+          p: 0.5
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: seq
+  modules:
+    rnn: [seq]
+    rnn_output: [rnn]
+    rnn_seq_last: [rnn_output]
+    flatten_last: [rnn_seq_last]
+    mlp: [flatten_last]
+  output: mlp

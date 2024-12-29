@@ -1,0 +1,57 @@
+# stereoscopic vision conv classifier
+modules:
+  # single conv shared for left and right
+  conv:
+    Sequential:
+      - LazyConv2d:
+          out_channels: 32
+          kernel_size: 3
+      - ReLU:
+      - LazyConv2d:
+          out_channels: 64
+          kernel_size: 3
+      - ReLU:
+      - MaxPool2d:
+          kernel_size: 2
+      - Dropout:
+          p: 0.25
+      - Flatten:
+
+  # separate identical mlp for left and right for processing
+  left_mlp: &left_mlp
+    Sequential:
+      - LazyLinear:
+          out_features: 256
+      - ReLU:
+      - LazyLinear:
+          out_features: 128
+      - ReLU:
+  right_mlp:
+    <<: *left_mlp
+
+  # merge left and right with product for stereo vision
+  stereo_merge:
+    MergeProd:
+
+  # classify with mlp
+  mlp:
+    Sequential:
+      - LazyLinear:
+          out_features: 64
+      - ReLU:
+      - LazyLinear:
+          out_features: 10
+      - LogSoftmax:
+          dim: 1
+
+graph:
+  input: [left_image, right_image]
+  modules:
+    # reuse syntax: <module>~<suffix>
+    conv~left: [left_image]
+    conv~right: [right_image]
+    left_mlp: [conv~left]
+    right_mlp: [conv~right]
+    stereo_merge: [[left_mlp, right_mlp]]
+    mlp: [stereo_merge]
+  output: mlp

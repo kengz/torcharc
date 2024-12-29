@@ -1,0 +1,17 @@
+# NOTE lazy modules is recommended for ease https://pytorch.org/docs/stable/generated/torch.nn.LazyLinear.html
+modules:
+  mlp:
+    Sequential:
+      - Linear:
+          in_features: 128
+          out_features: 64
+      - ReLU:
+      - Linear:
+          in_features: 64
+          out_features: 10
+
+graph:
+  input: x
+  modules:
+    mlp: [x]
+  output: mlp
