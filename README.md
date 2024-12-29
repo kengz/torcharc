@@ -1,4 +1,6 @@
-# TorchArc ![CI](https://github.com/kengz/torcharc/workflows/CI/badge.svg)
+# TorchArc
+
+![Test](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
 
 Build PyTorch models by specifying architectures.
 
