@@ -8,7 +8,7 @@ import torcharc
 # ================================================
 # Example: build model from spec file
 
-filepath = Path(".") / "example" / "spec" / "basic" / "mlp.yaml"
+filepath = Path(".") / "torcharc" / "example" / "spec" / "basic" / "mlp.yaml"
 
 # The following are equivalent:
 

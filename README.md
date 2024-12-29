@@ -36,7 +36,7 @@ import yaml
 import torcharc
 
 
-filepath = Path(".") / "example" / "spec" / "basic" / "mlp.yaml"
+filepath = Path(".") / "torcharc" / "example" / "spec" / "basic" / "mlp.yaml"
 
 # The following are equivalent:
 
