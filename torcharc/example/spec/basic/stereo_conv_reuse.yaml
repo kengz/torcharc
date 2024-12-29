@@ -37,6 +37,4 @@ graph:
     conv~right: [right_image]
     left_mlp: [conv~left]
     right_mlp: [conv~right]
-  output:
-    left: left_mlp
-    right: right_mlp
+  output: [left_mlp, right_mlp]

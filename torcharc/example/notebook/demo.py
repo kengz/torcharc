@@ -103,8 +103,7 @@ model = torcharc.build(torcharc.SPEC_DIR / "basic" / "stereo_conv_reuse.yaml")
 
 # Run the model and check the output shape
 left_image = right_image = torch.randn(4, 3, 32, 32)
-output = model(left_image=left_image, right_image=right_image)
-left, right = output["left"], output["right"]
+left, right = model(left_image=left_image, right_image=right_image)
 assert left.shape == (4, 10)
 assert right.shape == (4, 10)
 

@@ -41,8 +41,7 @@ def test_stereo_conv():
     assert isinstance(model, torch.nn.Module)
 
     left_image = right_image = torch.randn(B, 3, 32, 32)
-    output = model(left_image=left_image, right_image=right_image)
-    left, right = output["left"], output["right"]
+    left, right = model(left_image=left_image, right_image=right_image)
     assert left.shape == (B, 10)
     assert right.shape == (B, 10)
 
@@ -51,6 +50,8 @@ def test_stereo_conv():
     assert len(compiled_model(left_image, right_image)) == 2
     scripted_model = torch.jit.script(model)
     assert len(scripted_model(left_image, right_image)) == 2
+    traced_model = torch.jit.trace(model, (left_image, right_image))
+    assert len(traced_model(left_image, right_image)) == 2
 
 
 @pytest.mark.parametrize(
