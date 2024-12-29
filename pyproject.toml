@@ -1,7 +1,7 @@
 [project]
 name = "torcharc"
 version = "2.0.0"
-description = "Build PyTorch networks by specifying architectures."
+description = "Build PyTorch models by specifying architectures."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
