@@ -1019,7 +1019,7 @@ The design of TorchArc is guided as follows:
 1. expressive: it can be used to build both simple and advanced model architecture easily
 1. portable: it returns torch.nn.Module that can be used anywhere; it is not a framework.
 1. performant: PyTorch-native, fully-compatible with `torch.compile`, and mostly with torch JIT script and trace
-1. parametrizable: file/data-based spec allows easy control of model architecture, e.g. for hyperparameter search
+1. parametrizable: data-based model-building unlocks fast experimentation, e.g. by building logic for hyperparameter / architecture search
 
 ## Development
 
