@@ -1014,7 +1014,7 @@ See more in the pydantic spec definition:
 
 The design of TorchArc is guided as follows:
 
-1. Simple: the module spec is straightforward:
+1. simple: the module spec is straightforward:
    1. it is simply torch.nn.Module class name with kwargs.
    1. it includes official torch.nn.Modules, Sequential, and custom-defined modules registered via `torcharc.register_nn`
    1. it uses modules only for - torcharc is not meant to replace custom functions that is best written in PyTorch code
