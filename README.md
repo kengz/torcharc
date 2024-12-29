@@ -1037,5 +1037,5 @@ uv sync
 ### Unit Tests
 
 ```bash
-python setup.py test
+uv run pytest
 ```
