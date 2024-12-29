@@ -58,7 +58,6 @@ model = spec.build()
 ### Example: basic MLP
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/basic/mlp.yaml](torcharc/example/spec/basic/mlp.yaml)
 
@@ -81,7 +80,6 @@ graph:
   output: mlp
 ```
 
-</p>
 </details>
 
 ```python
@@ -105,7 +103,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -117,7 +114,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/mlp.png)
+
 </details>
 
 ---
@@ -125,7 +123,6 @@ GraphModule(
 ### Example: MLP (Lazy)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/basic/mlp_lazy.yaml](torcharc/example/spec/basic/mlp_lazy.yaml)
 
@@ -147,7 +144,6 @@ graph:
   output: mlp
 ```
 
-</p>
 </details>
 
 ```python
@@ -157,7 +153,6 @@ model  # shows LazyLinear before first forward pass
 ```
 
 <details><summary>model (before forward pass)</summary>
-<p>
 
 ```
 GraphModule(
@@ -169,7 +164,6 @@ GraphModule(
 )
 ```
 
-</p>
 </details>
 
 ```python
@@ -185,7 +179,6 @@ model  # shows Linear after first forward pass
 ```
 
 <details><summary>model (after forward pass)</summary>
-<p>
 
 ```
 GraphModule(
@@ -197,7 +190,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/mlp.png)
+
 </details>
 
 ---
@@ -205,7 +199,6 @@ GraphModule(
 ### Example: MNIST conv
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/mnist/conv.yaml](torcharc/example/spec/mnist/conv.yaml)
 
@@ -244,7 +237,6 @@ graph:
   output: conv
 ```
 
-</p>
 </details>
 
 ```python
@@ -259,7 +251,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -280,7 +271,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/conv.png)
+
 </details>
 
 ---
@@ -288,7 +280,6 @@ GraphModule(
 ### Example: Reuse syntax: Stereo Conv
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/basic/stereo_conv_reuse.yaml](torcharc/example/spec/basic/stereo_conv_reuse.yaml)
 
@@ -335,7 +326,6 @@ graph:
   output: [left_mlp, right_mlp]
 ```
 
-</p>
 </details>
 
 ```python
@@ -353,7 +343,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -381,7 +370,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/stereo_conv_reuse.png)
+
 </details>
 
 ---
@@ -389,7 +379,6 @@ GraphModule(
 ### Example: transformer
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/transformer/transformer.yaml](torcharc/example/spec/transformer/transformer.yaml)
 
@@ -426,7 +415,6 @@ graph:
   output: mlp
 ```
 
-</p>
 </details>
 
 ```python
@@ -442,7 +430,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -478,7 +465,6 @@ GraphModule(
 )
 ```
 
-</p>
 </details>
 
 ---
@@ -488,7 +474,6 @@ GraphModule(
 > See more in [torcharc/module/get.py](torcharc/module/get.py)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/transformer/attn.yaml](torcharc/example/spec/transformer/attn.yaml)
 
@@ -527,7 +512,6 @@ graph:
   output: mlp
 ```
 
-</p>
 </details>
 
 ```python
@@ -545,7 +529,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -559,7 +542,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/attn.png)
+
 </details>
 
 ---
@@ -569,7 +553,6 @@ GraphModule(
 > See more in [torcharc/module/merge.py](torcharc/module/merge.py)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/advanced/dlrm_sum.yaml](torcharc/example/spec/advanced/dlrm_sum.yaml)
 
@@ -631,7 +614,6 @@ graph:
   output: classifier
 ```
 
-</p>
 </details>
 
 ```python
@@ -650,7 +632,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -677,7 +658,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/dlrm.png)
+
 </details>
 
 ---
@@ -685,7 +667,6 @@ GraphModule(
 ### Example: Merge modules: FiLM
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/merge/film.yaml](torcharc/example/spec/merge/film.yaml)
 
@@ -719,7 +700,6 @@ graph:
   output: tail
 ```
 
-</p>
 </details>
 
 ```python
@@ -736,7 +716,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -772,7 +751,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/film.png)
+
 </details>
 
 ---
@@ -782,7 +762,6 @@ GraphModule(
 > See more in [torcharc/module/fork.py](torcharc/module/fork.py)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/fork/chunk.yaml](torcharc/example/spec/fork/chunk.yaml)
 
@@ -812,7 +791,6 @@ graph:
   output: [tail_0, tail_1]
 ```
 
-</p>
 </details>
 
 ```python
@@ -828,7 +806,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -839,7 +816,8 @@ GraphModule(
 )
 ```
 
-</p>
+![](images/chunk.png)
+
 </details>
 
 ---
@@ -849,7 +827,6 @@ GraphModule(
 > See more in [torcharc/module/fn.py](torcharc/module/fn.py)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/fn/reduce_mean.yaml](torcharc/example/spec/fn/reduce_mean.yaml)
 
@@ -885,7 +862,6 @@ graph:
   output: text_embed
 ```
 
-</p>
 </details>
 
 ```python
@@ -901,7 +877,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -935,10 +910,8 @@ GraphModule(
   )
   (text_embed): Reduce()
 )
-
 ```
 
-</p>
 </details>
 
 ---
@@ -948,7 +921,6 @@ GraphModule(
 > See more in [torcharc/module/fn.py](torcharc/module/fn.py)
 
 <details><summary>spec file</summary>
-<p>
 
 File: [torcharc/example/spec/fn/fn_topk.yaml](torcharc/example/spec/fn/fn_topk.yaml)
 
@@ -977,7 +949,6 @@ graph:
   output: mlp
 ```
 
-</p>
 </details>
 
 ```python
@@ -994,7 +965,6 @@ model
 ```
 
 <details><summary>model</summary>
-<p>
 
 ```
 GraphModule(
@@ -1010,7 +980,6 @@ GraphModule(
 )
 ```
 
-</p>
 </details>
 
 ---
