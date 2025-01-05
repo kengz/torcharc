@@ -15,9 +15,9 @@ pip install torcharc
 ## Usage
 
 1. specify model architecture in a YAML spec file, e.g. at `spec_filepath = "./example/spec/basic/mlp.yaml"`
-2. `import torcharc`
-3. (optional) if you have custom torch.nn.Module, e.g. `MyModule`, register it with `torcharc.register_nn(MyModule)`
-4. build with: `model = torcharc.build(spec_filepath)`
+2. `import torcharc`.
+   1. (optional) if you have custom torch.nn.Module, e.g. `MyModule`, register it with `torcharc.register_nn(MyModule)`
+3. build with: `model = torcharc.build(spec_filepath)`
 
 The returned model is a PyTorch `nn.Module`, fully-compatible with `torch.compile`, and mostly compatible with PyTorch JIT script and trace.
 
@@ -272,6 +272,198 @@ GraphModule(
 ```
 
 ![](images/conv.png)
+
+</details>
+
+---
+
+### Example: MLP (Compact)
+
+Use compact spec that expands into Sequential spec - this is useful for architecture search.
+
+<details><summary>spec file</summary>
+
+File: [torcharc/example/spec/compact/mlp.yaml](torcharc/example/spec/compact/mlp.yaml)
+
+```yaml
+# modules:
+#   mlp:
+#     Sequential:
+#       - LazyLinear:
+#           out_features: 128
+#       - ReLU:
+#       - LazyLinear:
+#           out_features: 128
+#       - ReLU:
+#       - LazyLinear:
+#           out_features: 64
+#       - ReLU:
+#       - LazyLinear:
+#           out_features: 32
+#       - ReLU:
+
+# the above is equivalent to the compact spec below
+
+modules:
+  mlp:
+    compact:
+      layer:
+        type: LazyLinear
+        keys: [out_features]
+        args: [64, 64, 32, 16]
+      postlayer:
+        - ReLU:
+
+graph:
+  input: x
+  modules:
+    mlp: [x]
+  output: mlp
+```
+
+</details>
+
+```python
+model = torcharc.build(torcharc.SPEC_DIR / "compact" / "mlp.yaml")
+
+# Run the model and check the output shape
+x = torch.randn(4, 128)
+y = model(x)
+assert y.shape == (4, 16)
+
+model
+```
+
+<details><summary>model</summary>
+
+```
+GraphModule(
+  (mlp): Sequential(
+    (0): Linear(in_features=128, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=64, out_features=64, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=64, out_features=32, bias=True)
+    (5): ReLU()
+    (6): Linear(in_features=32, out_features=16, bias=True)
+    (7): ReLU()
+  )
+)
+```
+
+![](images/mlp_compact.png)
+
+</details>
+
+---
+
+### Example: Conv (Compact)
+
+Use compact spec that expands into Sequential spec - this is useful for architecture search.
+
+<details><summary>spec file</summary>
+
+File: [torcharc/example/spec/compact/conv.yaml](torcharc/example/spec/compact/conv.yaml)
+
+```yaml
+# modules:
+#   conv:
+#     Sequential:
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 16
+#           kernel_size: 2
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 32
+#           kernel_size: 3
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 64
+#           kernel_size: 4
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#   classifier:
+#     Sequential:
+#       - Flatten:
+#       - LazyLinear:
+#           out_features: 10
+
+# the above is equivalent to the compact spec below
+
+modules:
+  conv:
+    compact:
+      prelayer:
+        - LazyBatchNorm2d:
+      layer:
+        type: LazyConv2d
+        keys: [out_channels, kernel_size]
+        args: [[16, 2], [32, 3], [64, 4]]
+      postlayer:
+        - ReLU:
+        - Dropout:
+            p: 0.1
+  classifier:
+    Sequential:
+      - Flatten:
+      - LazyLinear:
+          out_features: 10
+
+graph:
+  input: image
+  modules:
+    conv: [image]
+    classifier: [conv]
+  output: classifier
+```
+
+</details>
+
+```python
+model = torcharc.build(torcharc.SPEC_DIR / "compact" / "conv_classifier.yaml")
+
+# Run the model and check the output shape
+x = torch.randn(4, 1, 28, 28)
+y = model(x)
+assert y.shape == (4, 10)
+
+model
+```
+
+<details><summary>model</summary>
+
+```
+GraphModule(
+  (conv): Sequential(
+    (0): BatchNorm2d(1, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Conv2d(1, 16, kernel_size=(2, 2), stride=(1, 1))
+    (2): ReLU()
+    (3): Dropout(p=0.1, inplace=False)
+    (4): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (5): Conv2d(16, 32, kernel_size=(3, 3), stride=(1, 1))
+    (6): ReLU()
+    (7): Dropout(p=0.1, inplace=False)
+    (8): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (9): Conv2d(32, 64, kernel_size=(4, 4), stride=(1, 1))
+    (10): ReLU()
+    (11): Dropout(p=0.1, inplace=False)
+  )
+  (classifier): Sequential(
+    (0): Flatten(start_dim=1, end_dim=-1)
+    (1): Linear(in_features=30976, out_features=10, bias=True)
+  )
+)
+```
+
+![](images/conv_classifier_compact.png)
 
 </details>
 

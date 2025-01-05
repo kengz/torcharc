@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torcharc.validator.modules import ModuleSpec, NNSpec, SequentialSpec
+from torcharc.validator.modules import CompactSpec, ModuleSpec, NNSpec, SequentialSpec
 
 
 @pytest.mark.parametrize(
@@ -59,6 +59,61 @@ def test_sequential_spec():
 def test_invalid_sequential_spec(spec_dict):
     with pytest.raises(Exception):
         SequentialSpec(**spec_dict).build()
+
+
+@pytest.mark.parametrize(
+    "spec_dict",
+    [
+        {
+            "compact": {
+                "layer": {
+                    "type": "LazyLinear",
+                    "keys": ["out_features"],
+                    "args": [64, 64, 32, 16],
+                },
+                "postlayer": [{"ReLU": {}}],
+            }
+        },
+        {
+            "compact": {
+                "prelayer": [{"LazyBatchNorm2d": {}}],
+                "layer": {
+                    "type": "LazyConv2d",
+                    "keys": ["out_channels", "kernel_size"],
+                    "args": [[16, 2], [32, 3], [64, 4]],
+                },
+                "postlayer": [{"ReLU": {}}, {"Dropout": {"p": 0.1}}],
+            }
+        },
+    ],
+)
+def test_compact_spec(spec_dict):
+    module = CompactSpec(**spec_dict).build()
+    assert isinstance(module, torch.nn.Module)
+
+
+@pytest.mark.parametrize(
+    "spec_dict",
+    [
+        # multi-key
+        {
+            "compact": {
+                "layer": {
+                    "type": "LazyLinear",
+                    "keys": ["out_features"],
+                    "args": [64, 64, 32, 16],
+                },
+                "postlayer": [{"ReLU": {}}],
+            },
+            "ReLU": {},
+        },
+        # non-compact
+        {"LazyLinear": {"out_features": 64}},
+    ],
+)
+def test_invalid_compact_spec(spec_dict):
+    with pytest.raises(Exception):
+        CompactSpec(**spec_dict).build()
 
 
 @pytest.mark.parametrize(

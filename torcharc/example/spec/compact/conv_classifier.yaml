@@ -1,0 +1,57 @@
+# modules:
+#   conv:
+#     Sequential:
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 16
+#           kernel_size: 2
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 32
+#           kernel_size: 3
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#       - LazyBatchNorm2d:
+#       - LazyConv2d:
+#           out_channels: 64
+#           kernel_size: 4
+#       - ReLU:
+#       - Dropout:
+#           p: 0.1
+#   classifier:
+#     Sequential:
+#       - Flatten:
+#       - LazyLinear:
+#           out_features: 10
+
+# the above is equivalent to the compact spec below
+
+modules:
+  conv:
+    compact:
+      prelayer:
+        - LazyBatchNorm2d:
+      layer:
+        type: LazyConv2d
+        keys: [out_channels, kernel_size]
+        args: [[16, 2], [32, 3], [64, 4]]
+      postlayer:
+        - ReLU:
+        - Dropout:
+            p: 0.1
+  classifier:
+    Sequential:
+      - Flatten:
+      - LazyLinear:
+          out_features: 10
+
+graph:
+  input: image
+  modules:
+    conv: [image]
+    classifier: [conv]
+  output: classifier

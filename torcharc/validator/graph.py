@@ -9,7 +9,7 @@ class GraphSpec(BaseModel):
     """
 
     input: str | list[str] = Field(
-        description=" input placeholder nodes of fx.Graph",
+        description="Input placeholder nodes of fx.Graph",
         examples=["x", ["x_0, x_1"]],
     )
     modules: dict[str, list[str | list[str]] | dict[str, str]] = Field(
