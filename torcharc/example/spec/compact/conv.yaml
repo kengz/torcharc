@@ -23,7 +23,7 @@
 #       - Dropout:
 #           p: 0.1
 
-# the above is equivalent to the compact spec below
+# the above can be written compactly as follows
 
 modules:
   conv:
