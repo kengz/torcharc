@@ -290,10 +290,7 @@ File: [torcharc/example/spec/compact/mlp.yaml](torcharc/example/spec/compact/mlp
 #   mlp:
 #     Sequential:
 #       - LazyLinear:
-#           out_features: 128
-#       - ReLU:
-#       - LazyLinear:
-#           out_features: 128
+#           out_features: 64
 #       - ReLU:
 #       - LazyLinear:
 #           out_features: 64
@@ -301,8 +298,11 @@ File: [torcharc/example/spec/compact/mlp.yaml](torcharc/example/spec/compact/mlp
 #       - LazyLinear:
 #           out_features: 32
 #       - ReLU:
+#       - LazyLinear:
+#           out_features: 16
+#       - ReLU:
 
-# the above is equivalent to the compact spec below
+# the above can be written compactly as follows
 
 modules:
   mlp:
@@ -396,7 +396,7 @@ File: [torcharc/example/spec/compact/conv.yaml](torcharc/example/spec/compact/co
 #       - LazyLinear:
 #           out_features: 10
 
-# the above is equivalent to the compact spec below
+# the above can be written compactly as follows
 
 modules:
   conv:

@@ -6,8 +6,16 @@ import yaml
 import torcharc
 
 # ================================================
-# Example: build model from spec file
+# To visualize model in Tensorboard, use the following
+# from torch.utils.tensorboard import SummaryWriter
 
+# writer = SummaryWriter(log_dir="tb_logs/mlp")
+# writer.add_graph(model, x)
+# writer.close()
+
+
+# ================================================
+# Example: build model from spec file
 filepath = Path(".") / "torcharc" / "example" / "spec" / "basic" / "mlp.yaml"
 
 # The following are equivalent:
@@ -52,6 +60,7 @@ model
 #   )
 # )
 
+
 # ================================================
 # Example: MLP (Lazy)
 # PyTorch Lazy layers will infer the input size from the first forward pass. This is recommended as it greatly simplifies the model definition.
@@ -86,6 +95,30 @@ model  # shows Linear after first forward pass
 # ================================================
 # Example: MNIST conv
 model = torcharc.build(torcharc.SPEC_DIR / "mnist" / "conv.yaml")
+
+# Run the model and check the output shape
+x = torch.randn(4, 1, 28, 28)
+y = model(x)
+assert y.shape == (4, 10)
+
+model
+
+
+# ================================================
+# Example: MLP (Compact)
+model = torcharc.build(torcharc.SPEC_DIR / "compact" / "mlp.yaml")
+
+# Run the model and check the output shape
+x = torch.randn(4, 128)
+y = model(x)
+assert y.shape == (4, 16)
+
+model
+
+
+# ================================================
+# Example: Conv (Compact)
+model = torcharc.build(torcharc.SPEC_DIR / "compact" / "conv_classifier.yaml")
 
 # Run the model and check the output shape
 x = torch.randn(4, 1, 28, 28)

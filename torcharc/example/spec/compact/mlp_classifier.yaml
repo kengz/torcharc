@@ -2,10 +2,7 @@
 #   mlp:
 #     Sequential:
 #       - LazyLinear:
-#           out_features: 128
-#       - ReLU:
-#       - LazyLinear:
-#           out_features: 128
+#           out_features: 64
 #       - ReLU:
 #       - LazyLinear:
 #           out_features: 64
@@ -13,11 +10,14 @@
 #       - LazyLinear:
 #           out_features: 32
 #       - ReLU:
+#       - LazyLinear:
+#           out_features: 16
+#       - ReLU:
 #   classifier:
 #     LazyLinear:
 #       out_features: 10
 
-# the above is equivalent to the compact spec below
+# the above can be written compactly as follows
 
 modules:
   mlp:
@@ -35,7 +35,6 @@ modules:
 graph:
   input: x
   modules:
-    # mlp: [x]
-    # classifier: mlp
-    classifier: [x]
+    mlp: [x]
+    classifier: [mlp]
   output: classifier
